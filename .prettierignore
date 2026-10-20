@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.next/
+benchmarks/.dist/
+benchmarks/latest.json
+benchmarks/report.html
+benchmarks/RESULTS.md
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+
+website/doc_build/
+website/.rspress/
+
+website/.test-build/

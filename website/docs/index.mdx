@@ -1,0 +1,91 @@
+---
+title: Ordinary classes. Reactive state.
+description: Write stateful business logic in TypeScript classes. Read it naturally in React, with property-level updates.
+---
+
+import { SelectiveDemo } from '../components/SelectiveDemo';
+import { withBase } from '@rspress/core/runtime';
+
+<img className="home-mascot" src={withBase('/kingfisher.png')} alt="Kinstate's kingfisher mascot" width="96" height="96" />
+
+<div className="intro-label">The Kinstate documentation</div>
+
+# Ordinary classes. Reactive state.
+
+<div className="intro-copy">Keep your business logic in TypeScript classes. Read the fields you need in React. Kinstate connects the two, with updates scoped to what each component actually reads.</div>
+
+<div className="intro-actions">
+  <a className="primary-link" href="./guide/quick-start">Get started</a>
+  <a className="secondary-link" href="./guide/introduction">Understand the model</a>
+</div>
+
+<SelectiveDemo />
+
+## A service, then a component
+
+No state declarations for individual fields. No React imports in your service. The build-time compiler handles render tracking so your component can stay straightforward.
+
+```tsx title="Counter.tsx"
+import { Service } from '@kinstate/core';
+import { ServiceProvider, useService } from '@kinstate/react';
+
+class CounterService extends Service {
+  count = 0;
+
+  increment() {
+    this.count++;
+  }
+
+  get doubled() {
+    return this.count * 2;
+  }
+}
+
+function Counter() {
+  const counter = useService(CounterService);
+
+  return (
+    <button onClick={() => counter.increment()}>
+      {counter.count} · doubled: {counter.doubled}
+    </button>
+  );
+}
+
+export default function App() {
+  return (
+    <ServiceProvider services={[CounterService]}>
+      <Counter />
+    </ServiceProvider>
+  );
+}
+```
+
+:::important The compiler is part of the setup
+Kinstate requires its Babel or Vite plugin. A hook alone cannot track arbitrary property reads after it returns. [Set up your build](./guide/quick-start.md) before using `useService`.
+:::
+
+## Start with your situation
+
+<div className="recipe-list">
+  <a href="./guide/updating-state"><strong>Update nested state and arrays</strong><span>Mutate locally owned state with ordinary assignments and methods.</span></a>
+  <a href="./guide/dependency-injection"><strong>Use state from another service</strong><span>Declare dependencies once and derive values across your service graph.</span></a>
+  <a href="./guide/external-state"><strong>Bring in data from a React hook</strong><span>Pass API data, local state or context through typed live inputs.</span></a>
+  <a href="./guide/callbacks"><strong>Call a function from another hook</strong><span>Supply save, navigation or mutation callbacks without coupling a service to React.</span></a>
+  <a href="./guide/forms-and-drafts"><strong>Keep a draft while API data refreshes</strong><span>Separate incoming data, local edits and your conflict policy.</span></a>
+  <a href="./guide/nextjs-and-ssr"><strong>Use Next.js with request-local state</strong><span>Set up the compiler, own your scopes and hydrate explicit initial data.</span></a>
+</div>
+
+## A small public surface
+
+| In a service | In React | At build time |
+| --- | --- | --- |
+| `Service`, `dependencies`, `observe` | `ServiceProvider`, `useService` | `@kinstate/compiler` |
+| Plain classes and computed getters | Scoped instances and tracked reads | Explicit per-render instrumentation |
+
+The core works independently of React. The React integration uses supported external-store APIs, and the compiler adds tracking around the reads you author. Read [the introduction](./guide/introduction.md) for the model, or go straight to [the API reference](./reference/core.md).
+
+## Know the boundaries
+
+Kinstate observes plain objects and arrays owned by a service. External input objects remain immutable borrowed references. Native collections and custom nested classes are opaque; JavaScript private slots do not become observable. Whole-array processing still has real costs.
+
+[Read the limits and trade-offs](./guide/limitations.md) and [performance guidance](./guide/performance.md) before choosing how to store a large dataset.

@@ -1,0 +1,76 @@
+name: Deploy documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      pages_enabled: ${{ steps.pages.outputs.enabled }}
+    env:
+      DOCS_BASE: ${{ vars.DOCS_BASE || format('/{0}/', github.event.repository.name) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run docs:build
+      - run: npm run docs:check
+      - run: npx playwright install --with-deps chromium
+      - run: npm run docs:test
+      - name: Check Pages configuration
+        id: pages
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          const response = await fetch(`${process.env.GITHUB_API_URL}/repos/${process.env.GITHUB_REPOSITORY}/pages`, {
+            headers: { Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json' },
+          });
+          if (!response.ok && response.status !== 404) throw new Error(`Pages configuration check failed: ${response.status}`);
+          const enabled = response.ok && (await response.json()).build_type === 'workflow';
+          appendFileSync(process.env.GITHUB_OUTPUT, `enabled=${enabled}\n`);
+          if (!enabled) appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            'Docs built and verified. To publish, choose **Settings → Pages → Source → GitHub Actions**, then rerun this workflow.\n');
+          JS
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name != 'pull_request'
+        with:
+          path: website/doc_build
+
+  deploy:
+    if: github.event_name != 'pull_request' && needs.build.outputs.pages_enabled == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

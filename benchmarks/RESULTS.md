@@ -1,0 +1,278 @@
+# React state benchmark report
+
+Run: 2026-10-20T20:24:45.002Z
+
+Compare libraries only within the same workload and size. **Lower is better** for all reported cost metrics (time and render calls); this report does not compute an overall ranking.
+
+## Methodology
+
+Production React in Chromium. This is a controlled commit checkpoint benchmark, not natural event latency or concurrent scheduling. Every library uses the same flushSync scheduling. Each case receives warmups and repeated samples; execution order is randomized.
+
+Samples per case: 5. Warmups: 2. Random seed: 20261020.
+
+Scheduling: Controlled commit benchmark: one synchronous logical transaction, one microtask checkpoint, then the same React flushSync checkpoint for every library; timing includes notification delivery and DOM commits, excludes correctness checks. No frame or paint wait.
+
+Median uses the middle value (mean of the two middle values for even samples). P95 uses the nearest-rank percentile. Update times and render calls are divided by operations; mount and unmount cover the complete consumer tree.
+
+Setup measures adapter and store construction, including initial data allocation. Startup is setup plus mount, computed per sample before summarizing. Compare startup rather than mount alone: libraries may initialize reactive data eagerly during setup or lazily during mount.
+
+Update P95 is the percentile of per-sample average milliseconds per operation, not a percentile of individual operation latencies. Each sample times its complete operation loop.
+
+Adapters use compiled useService, MobX observer, Zustand selectors with one structurally shared publication per transaction, and Valtio snapshots scoped to stable rows/nested objects (root snapshots for collection replacement/derivation).
+
+Render calls count update-phase component function calls, not browser paints. Library differences in array tracking can legitimately change render counts, including MobX arrays. Inspect the observed counts rather than assuming identical behavior.
+
+## Results
+
+| Workload | Size | Consumers | Operations | Library | Update ms/op median / P95 sample mean | Setup ms median / p95 | Startup ms median / p95 | Mount ms median / p95 | Unmount ms median / p95 | Renders/op median / p95 | Exact render calls min–max |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| bulk-rows-100 | 1000 | 100 | 10 | Kinstate | 0.46 / 0.58 | 0.2 / 0.4 | 1.1 / 1.3 | 0.9 / 1.1 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 1000 | 100 | 10 | MobX | 0.29 / 0.33 | 6.5 / 10.9 | 7.1 / 11.8 | 0.6 / 0.9 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 1000 | 100 | 10 | Zustand | 0.14 / 0.22 | 0.2 / 0.3 | 0.5 / 0.6 | 0.3 / 0.3 | 0.1 / 0.2 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 1000 | 100 | 10 | Valtio | 0.54 / 0.68 | 6.5 / 6.7 | 7.3 / 7.5 | 0.8 / 0.8 | 0.2 / 0.2 | 100 / 100 | 1000–1000 |
+| array-offscreen-row | 1000 | 100 | 10 | Kinstate | 0 / 0.01 | 0.2 / 0.3 | 0.9 / 0.9 | 0.6 / 0.7 | 0.1 / 0.2 | 0 / 0 | 0–0 |
+| array-offscreen-row | 1000 | 100 | 10 | MobX | 0 / 0.01 | 5.6 / 6.7 | 6.1 / 7 | 0.4 / 0.6 | 0.1 / 0.1 | 0 / 0 | 0–0 |
+| array-offscreen-row | 1000 | 100 | 10 | Zustand | 0 / 0.01 | 0.1 / 0.2 | 0.4 / 0.4 | 0.2 / 0.3 | 0.1 / 0.1 | 0 / 0 | 0–0 |
+| array-offscreen-row | 1000 | 100 | 10 | Valtio | 0 / 0 | 6.9 / 8 | 8 / 8.9 | 0.7 / 1.1 | 0.1 / 0.2 | 0 / 0 | 0–0 |
+| filter-sort | 10000 | 1 | 10 | Kinstate | 15.12 / 54.76 | 1.3 / 3 | 37.2 / 41.5 | 34.2 / 40.3 | 1.5 / 1.8 | 1 / 1 | 10–10 |
+| filter-sort | 10000 | 1 | 10 | MobX | 7.98 / 8.38 | 63.4 / 64.8 | 72.7 / 73.9 | 9.2 / 9.5 | 3.2 / 4.9 | 1 / 1 | 10–10 |
+| filter-sort | 10000 | 1 | 10 | Zustand | 1 / 1.14 | 1.1 / 1.3 | 2.2 / 2.4 | 1.1 / 1.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| filter-sort | 10000 | 1 | 10 | Valtio | 37.34 / 40.64 | 64.9 / 299.8 | 144.4 / 384.4 | 84.6 / 90.5 | 3.3 / 3.4 | 1 / 1 | 10–10 |
+| api-payload | 50000 | 100 | 10 | Kinstate | 2.78 / 3.86 | 9.1 / 9.4 | 10.4 / 11.3 | 1.3 / 2.1 | 0.5 / 0.6 | 100 / 100 | 1000–1000 |
+| api-payload | 50000 | 100 | 10 | MobX | 172.53 / 248.2 | 338.5 / 360.4 | 339.2 / 361.1 | 0.6 / 0.7 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| api-payload | 50000 | 100 | 10 | Zustand | 2.19 / 2.31 | 5.6 / 6.6 | 5.9 / 7.2 | 0.3 / 0.6 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| api-payload | 50000 | 100 | 10 | Valtio | 415.79 / 573.6 | 353.3 / 360 | 617.8 / 646.8 | 266.9 / 288.4 | 10.5 / 11.5 | 1 / 1 | 10–10 |
+| array-offscreen-row | 10000 | 100 | 10 | Kinstate | 0 / 0 | 1.1 / 1.2 | 1.8 / 2.2 | 0.7 / 1 | 0.3 / 0.4 | 0 / 0 | 0–0 |
+| array-offscreen-row | 10000 | 100 | 10 | MobX | 0.01 / 0.01 | 69.8 / 85.9 | 70.3 / 86.6 | 0.5 / 0.7 | 0.2 / 0.3 | 0 / 0 | 0–0 |
+| array-offscreen-row | 10000 | 100 | 10 | Zustand | 0.01 / 0.01 | 1.1 / 1.2 | 1.4 / 1.5 | 0.3 / 0.4 | 0.1 / 0.2 | 0 / 0 | 0–0 |
+| array-offscreen-row | 10000 | 100 | 10 | Valtio | 0.01 / 0.01 | 61.3 / 70.4 | 62.4 / 71.3 | 0.9 / 1.2 | 0.2 / 0.5 | 0 / 0 | 0–0 |
+| array-reorder | 50000 | 100 | 10 | Kinstate | 58.53 / 58.98 | 6.1 / 13 | 6.8 / 14 | 1 / 1.7 | 0.5 / 0.5 | 100 / 100 | 1000–1000 |
+| array-reorder | 50000 | 100 | 10 | MobX | 4.08 / 4.53 | 359.1 / 1,464.7 | 359.6 / 1,465.4 | 0.6 / 0.7 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| array-reorder | 50000 | 100 | 10 | Zustand | 0.18 / 0.24 | 6.2 / 6.7 | 6.7 / 7.4 | 0.3 / 0.7 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| array-reorder | 50000 | 100 | 10 | Valtio | 225.73 / 262.54 | 365.5 / 420.7 | 640.4 / 712.2 | 274.9 / 298.8 | 13.1 / 14.2 | 100 / 100 | 1000–1000 |
+| array-remove | 50000 | 1 | 10 | Kinstate | 0.02 / 0.04 | 9.4 / 11.7 | 9.6 / 11.9 | 0.2 / 0.5 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| array-remove | 50000 | 1 | 10 | MobX | 0.01 / 0.03 | 359.7 / 839.4 | 360 / 839.5 | 0.3 / 0.3 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| array-remove | 50000 | 1 | 10 | Zustand | 0.03 / 0.14 | 6.3 / 716.3 | 6.4 / 716.5 | 0.1 / 0.3 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| array-remove | 50000 | 1 | 10 | Valtio | 79.72 / 86.01 | 374.6 / 404.7 | 637.3 / 789.9 | 292.1 / 402.2 | 13.3 / 22.2 | 1 / 1 | 10–10 |
+| single-field | 1000 | 1 | 10 | Kinstate | 0.01 / 0.02 | 0.2 / 0.2 | 0.2 / 0.3 | 0.1 / 0.1 | 0 / 0.1 | 1 / 1 | 10–10 |
+| single-field | 1000 | 1 | 10 | MobX | 0.01 / 0.02 | 5.5 / 5.6 | 5.5 / 5.7 | 0.1 / 0.1 | 0 / 0.1 | 1 / 1 | 10–10 |
+| single-field | 1000 | 1 | 10 | Zustand | 0.01 / 0.02 | 0.1 / 0.2 | 0.2 / 0.5 | 0.1 / 0.3 | 0 / 0.1 | 1 / 1 | 10–10 |
+| single-field | 1000 | 1 | 10 | Valtio | 0.07 / 0.07 | 5.8 / 5.9 | 10.1 / 11.1 | 4.3 / 5.2 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| bulk-rows-100 | 50000 | 100 | 10 | Kinstate | 0.45 / 1.11 | 6.5 / 720.4 | 7.2 / 721.5 | 0.8 / 3.4 | 0.5 / 0.5 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 50000 | 100 | 10 | MobX | 0.21 / 0.32 | 352.1 / 382.2 | 352.7 / 383 | 0.6 / 0.8 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 50000 | 100 | 10 | Zustand | 0.13 / 0.25 | 6.6 / 695.6 | 7 / 696 | 0.4 / 0.6 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 50000 | 100 | 10 | Valtio | 0.6 / 1.63 | 358.8 / 380.4 | 359.5 / 384.3 | 1.9 / 3.9 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| map-and-replace | 1000 | 100 | 10 | Kinstate | 3.29 / 3.92 | 0.2 / 0.2 | 0.8 / 0.9 | 0.6 / 0.7 | 0.3 / 0.3 | 100 / 100 | 1000–1000 |
+| map-and-replace | 1000 | 100 | 10 | MobX | 5.61 / 6.28 | 5.5 / 7.1 | 5.8 / 7.6 | 0.4 / 1 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| map-and-replace | 1000 | 100 | 10 | Zustand | 0.04 / 0.07 | 0.1 / 0.2 | 0.4 / 0.5 | 0.3 / 0.4 | 0.1 / 0.3 | 1 / 1 | 10–10 |
+| map-and-replace | 1000 | 100 | 10 | Valtio | 6.93 / 7.56 | 5.6 / 6 | 10.3 / 10.5 | 4.4 / 4.8 | 0.3 / 0.4 | 1 / 1 | 10–10 |
+| append | 1000 | 1 | 10 | Kinstate | 0.01 / 0.02 | 0.2 / 0.2 | 0.3 / 0.3 | 0.1 / 0.1 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| append | 1000 | 1 | 10 | MobX | 0.01 / 0.02 | 5.5 / 5.6 | 5.5 / 5.8 | 0.1 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| append | 1000 | 1 | 10 | Zustand | 0.01 / 0.01 | 0.1 / 0.2 | 0.2 / 0.3 | 0.1 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| append | 1000 | 1 | 10 | Valtio | 0.89 / 0.92 | 5.6 / 6.3 | 9.6 / 10.4 | 4.1 / 4.1 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| array-visible-row | 10000 | 100 | 10 | Kinstate | 0.03 / 0.05 | 1.3 / 4.9 | 2 / 6.7 | 0.8 / 1.8 | 0.4 / 0.4 | 1 / 1 | 10–10 |
+| array-visible-row | 10000 | 100 | 10 | MobX | 0.02 / 0.03 | 75.6 / 86.4 | 76.1 / 86.9 | 0.5 / 1 | 0.3 / 0.3 | 1 / 1 | 10–10 |
+| array-visible-row | 10000 | 100 | 10 | Zustand | 0.03 / 0.04 | 1.4 / 4 | 1.7 / 4.5 | 0.3 / 0.5 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| array-visible-row | 10000 | 100 | 10 | Valtio | 0.02 / 0.03 | 72.9 / 75.4 | 76.2 / 76.6 | 0.9 / 3.7 | 0.3 / 0.3 | 1 / 1 | 10–10 |
+| append | 50000 | 1 | 10 | Kinstate | 0.03 / 0.08 | 9.3 / 15 | 9.5 / 15.3 | 0.2 / 0.4 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| append | 50000 | 1 | 10 | MobX | 0.03 / 0.03 | 350 / 846.9 | 350.1 / 847.1 | 0.2 / 0.2 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| append | 50000 | 1 | 10 | Zustand | 0.19 / 0.26 | 5.6 / 6.8 | 5.7 / 7 | 0.1 / 0.2 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| append | 50000 | 1 | 10 | Valtio | 96.32 / 119.66 | 373.6 / 424.1 | 769.4 / 1,159.1 | 345.3 / 785.5 | 24 / 26 | 1 / 1 | 10–10 |
+| api-frozen | 50000 | 100 | 10 | Kinstate | 4.86 / 5.82 | 8.6 / 11.4 | 9.9 / 13.4 | 1.3 / 2 | 0.4 / 0.4 | 100 / 100 | 1000–1000 |
+| api-frozen | 50000 | 100 | 10 | MobX | 154.36 / 164.15 | 595.8 / 670.7 | 596.4 / 671.2 | 0.6 / 1.3 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| api-frozen | 50000 | 100 | 10 | Zustand | 4.8 / 5.15 | 6.1 / 6.5 | 6.4 / 7.1 | 0.3 / 0.6 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| api-frozen | 50000 | 100 | 10 | Valtio | 80.78 / 84.58 | 382.9 / 442.6 | 707.1 / 801.8 | 322.5 / 359.2 | 12.4 / 15 | 1 / 1 | 10–10 |
+| shared-fanout | 1000 | 100 | 10 | Kinstate | 0.18 / 0.36 | 0.2 / 0.3 | 0.5 / 0.6 | 0.4 / 0.4 | 0.3 / 0.3 | 100 / 100 | 1000–1000 |
+| shared-fanout | 1000 | 100 | 10 | MobX | 0.12 / 0.16 | 5.7 / 6.7 | 6 / 7.2 | 0.4 / 0.5 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| shared-fanout | 1000 | 100 | 10 | Zustand | 0.11 / 0.12 | 0.2 / 0.2 | 0.4 / 0.4 | 0.2 / 0.3 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| shared-fanout | 1000 | 100 | 10 | Valtio | 0.28 / 1.35 | 6.2 / 6.9 | 11 / 12.5 | 5.1 / 6.5 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| array-remove | 1000 | 1 | 10 | Kinstate | 0.01 / 0.03 | 0.2 / 0.2 | 0.3 / 0.4 | 0.1 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| array-remove | 1000 | 1 | 10 | MobX | 0.01 / 0.02 | 5.1 / 7.7 | 5.2 / 7.8 | 0.1 / 0.1 | 0 / 0 | 1 / 1 | 10–10 |
+| array-remove | 1000 | 1 | 10 | Zustand | 0.01 / 0.02 | 0.1 / 0.2 | 0.2 / 0.4 | 0.1 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| array-remove | 1000 | 1 | 10 | Valtio | 0.78 / 0.91 | 5.1 / 7.6 | 8.7 / 11.9 | 3.7 / 4.3 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| full-list-row | 5000 | 5000 | 10 | Kinstate | 0.49 / 0.66 | 0.8 / 425.2 | 30.8 / 451.2 | 28.1 / 30.1 | 10.1 / 10.9 | 1 / 1 | 10–10 |
+| full-list-row | 5000 | 5000 | 10 | MobX | 0.37 / 0.43 | 34.3 / 40.4 | 52 / 55.2 | 14.8 / 20.9 | 8 / 8.9 | 1 / 1 | 10–10 |
+| full-list-row | 5000 | 5000 | 10 | Zustand | 0.62 / 0.75 | 0.8 / 1.1 | 9.1 / 12.8 | 8.3 / 11.7 | 6.2 / 6.5 | 1 / 1 | 10–10 |
+| full-list-row | 5000 | 5000 | 10 | Valtio | 0.49 / 0.63 | 31.9 / 36.2 | 70.1 / 77.5 | 40 / 44.8 | 8.2 / 10.9 | 1 / 1 | 10–10 |
+| filter-sort | 50000 | 1 | 10 | Kinstate | 100.06 / 172.61 | 10.7 / 13.2 | 283.7 / 289.8 | 276.4 / 277.6 | 5.9 / 6.7 | 1 / 1 | 10–10 |
+| filter-sort | 50000 | 1 | 10 | MobX | 48.01 / 49.45 | 359.7 / 601.5 | 413.3 / 665.1 | 54.4 / 63.6 | 20.6 / 24.2 | 1 / 1 | 10–10 |
+| filter-sort | 50000 | 1 | 10 | Zustand | 4.9 / 5.02 | 5.9 / 20.9 | 10.6 / 25.7 | 4.8 / 4.9 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| filter-sort | 50000 | 1 | 10 | Valtio | 245.69 / 260.42 | 379.2 / 774.5 | 891.1 / 1,287.5 | 513 / 562.1 | 28.9 / 30.2 | 1 / 1 | 10–10 |
+| immutable-input-filter | 10000 | 1 | 10 | Kinstate | 1.42 / 1.46 | 1.2 / 476 | 2.4 / 477.3 | 1.2 / 1.3 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| immutable-input-filter | 10000 | 1 | 10 | MobX | 1.34 / 1.36 | 39.2 / 40.4 | 40.3 / 41.5 | 1.1 / 1.3 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| immutable-input-filter | 10000 | 1 | 10 | Zustand | 1.38 / 1.39 | 1.2 / 1.4 | 2.2 / 2.7 | 1.1 / 1.5 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| immutable-input-filter | 10000 | 1 | 10 | Valtio | 2.31 / 3.29 | 33.6 / 38.5 | 59.3 / 76.4 | 25.7 / 37.9 | 2.5 / 3 | 1 / 1 | 10–10 |
+| bulk-rows-100 | 10000 | 100 | 10 | Kinstate | 0.5 / 0.58 | 1.3 / 5.4 | 1.9 / 7.3 | 0.7 / 1.9 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 10000 | 100 | 10 | MobX | 0.25 / 0.29 | 64.8 / 496.2 | 65.1 / 497 | 0.5 / 0.8 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 10000 | 100 | 10 | Zustand | 0.12 / 0.13 | 1.2 / 1.5 | 1.5 / 1.7 | 0.3 / 0.4 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| bulk-rows-100 | 10000 | 100 | 10 | Valtio | 0.52 / 0.6 | 70.8 / 78.2 | 75.5 / 79 | 0.9 / 4.7 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| array-reorder | 1000 | 100 | 10 | Kinstate | 1.08 / 1.11 | 0.2 / 0.2 | 0.8 / 0.9 | 0.7 / 0.7 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| array-reorder | 1000 | 100 | 10 | MobX | 0.28 / 0.35 | 6.3 / 6.7 | 6.7 / 7.1 | 0.4 / 0.4 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| array-reorder | 1000 | 100 | 10 | Zustand | 0.1 / 0.16 | 0.1 / 0.2 | 0.4 / 0.5 | 0.2 / 0.4 | 0.2 / 0.2 | 100 / 100 | 1000–1000 |
+| array-reorder | 1000 | 100 | 10 | Valtio | 4.01 / 4.21 | 6.4 / 7.4 | 11.3 / 13 | 5 / 5.6 | 0.4 / 0.6 | 100 / 100 | 1000–1000 |
+| immutable-input-filter | 50000 | 1 | 10 | Kinstate | 7.63 / 8.67 | 8.8 / 11.6 | 13.6 / 17.6 | 4.8 / 6 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| immutable-input-filter | 50000 | 1 | 10 | MobX | 7.47 / 7.9 | 320.1 / 610.6 | 324.9 / 615.3 | 4.8 / 4.8 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| immutable-input-filter | 50000 | 1 | 10 | Zustand | 8.1 / 8.17 | 5.7 / 7 | 10.4 / 11.8 | 4.7 / 5.5 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| immutable-input-filter | 50000 | 1 | 10 | Valtio | 19.22 / 20.19 | 194.3 / 205.6 | 340.4 / 357.9 | 149.7 / 163.6 | 12.1 / 14.2 | 1 / 1 | 10–10 |
+| api-payload | 10000 | 100 | 10 | Kinstate | 1.06 / 1.27 | 4 / 4.5 | 5.6 / 464.4 | 1.6 / 459.9 | 0.4 / 0.6 | 100 / 100 | 1000–1000 |
+| api-payload | 10000 | 100 | 10 | MobX | 29.05 / 29.54 | 68.5 / 77.8 | 68.9 / 78.2 | 0.5 / 0.5 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| api-payload | 10000 | 100 | 10 | Zustand | 0.57 / 26.16 | 1.2 / 3.9 | 1.5 / 4.7 | 0.4 / 0.8 | 0.1 / 0.3 | 1 / 1 | 10–10 |
+| api-payload | 10000 | 100 | 10 | Valtio | 74.2 / 75.99 | 69 / 85.3 | 147.4 / 173.4 | 73.1 / 88.1 | 5.3 / 5.9 | 1 / 1 | 10–10 |
+| array-reorder | 10000 | 100 | 10 | Kinstate | 8.48 / 9.59 | 1.2 / 4.4 | 1.8 / 7.7 | 0.6 / 3.3 | 0.4 / 0.4 | 100 / 100 | 1000–1000 |
+| array-reorder | 10000 | 100 | 10 | MobX | 0.78 / 1.23 | 66.2 / 253.7 | 66.6 / 254.4 | 0.5 / 0.7 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| array-reorder | 10000 | 100 | 10 | Zustand | 0.1 / 0.12 | 1.1 / 1.2 | 1.3 / 1.5 | 0.2 / 0.3 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| array-reorder | 10000 | 100 | 10 | Valtio | 44.41 / 46.59 | 66.3 / 75.8 | 126 / 155.5 | 63.2 / 79.7 | 5.9 / 9.4 | 100 / 100 | 1000–1000 |
+| api-frozen | 10000 | 100 | 10 | Kinstate | 1.05 / 1.23 | 1.4 / 4.4 | 2.2 / 6.3 | 0.8 / 1.9 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| api-frozen | 10000 | 100 | 10 | MobX | 30.27 / 41.93 | 69.5 / 77 | 70 / 77.6 | 0.5 / 0.6 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| api-frozen | 10000 | 100 | 10 | Zustand | 0.76 / 0.78 | 1.1 / 1.1 | 1.3 / 1.6 | 0.2 / 0.5 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| api-frozen | 10000 | 100 | 10 | Valtio | 14.05 / 15.87 | 65 / 72.8 | 127 / 144.9 | 67.4 / 72.1 | 2.5 / 3 | 1 / 1 | 10–10 |
+| normalized-row | 50000 | 100 | 10 | Kinstate | 0.04 / 0.06 | 13.3 / 219.9 | 14.5 / 221.3 | 1.2 / 2.5 | 0.4 / 0.6 | 1 / 1 | 10–10 |
+| normalized-row | 50000 | 100 | 10 | MobX | 0.02 / 0.03 | 363.3 / 503.9 | 363.8 / 505 | 0.6 / 1.1 | 0.4 / 1.1 | 1 / 1 | 10–10 |
+| normalized-row | 50000 | 100 | 10 | Zustand | 0.14 / 0.17 | 7 / 429.7 | 7.3 / 430.1 | 0.3 / 0.6 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| normalized-row | 50000 | 100 | 10 | Valtio | 0.02 / 0.04 | 380.1 / 603.4 | 384.5 / 607.2 | 3.8 / 4.4 | 0.3 / 0.9 | 1 / 1 | 10–10 |
+| no-op | 1000 | 1 | 10 | Kinstate | 0 / 0 | 0.2 / 0.2 | 0.3 / 0.4 | 0.1 / 0.2 | 0 / 0.1 | 0 / 0 | 0–0 |
+| no-op | 1000 | 1 | 10 | MobX | 0 / 0.01 | 5.5 / 8.7 | 5.7 / 8.9 | 0.2 / 0.2 | 0 / 0.1 | 0 / 0 | 0–0 |
+| no-op | 1000 | 1 | 10 | Zustand | 0 / 0.01 | 0.1 / 0.2 | 0.2 / 0.4 | 0.1 / 0.2 | 0 / 0 | 0 / 0 | 0–0 |
+| no-op | 1000 | 1 | 10 | Valtio | 0 / 0 | 6.4 / 6.9 | 10.4 / 11.3 | 4.1 / 4.4 | 0.2 / 0.3 | 0 / 0 | 0–0 |
+| api-payload | 1000 | 100 | 10 | Kinstate | 0.5 / 0.61 | 0.1 / 4.6 | 0.7 / 6.3 | 0.6 / 1.7 | 0.2 / 0.4 | 100 / 100 | 1000–1000 |
+| api-payload | 1000 | 100 | 10 | MobX | 3.25 / 3.77 | 5.5 / 6 | 6 / 6.6 | 0.4 / 0.6 | 0.2 / 0.3 | 100 / 100 | 1000–1000 |
+| api-payload | 1000 | 100 | 10 | Zustand | 0.06 / 0.1 | 0.2 / 0.2 | 0.4 / 0.5 | 0.2 / 0.3 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| api-payload | 1000 | 100 | 10 | Valtio | 6.05 / 6.61 | 5.6 / 524.4 | 10.9 / 535.2 | 5.3 / 10.8 | 0.4 / 0.6 | 1 / 1 | 10–10 |
+| parent-rerender | 1000 | 100 | 10 | Kinstate | 0.04 / 0.05 | 0.1 / 0.3 | 0.4 / 0.6 | 0.3 / 0.3 | 0.1 / 0.2 | 0 / 0 | 0–0 |
+| parent-rerender | 1000 | 100 | 10 | MobX | 0.04 / 0.05 | 5.9 / 6.6 | 6.1 / 6.9 | 0.3 / 0.5 | 0.2 / 0.2 | 0 / 0 | 0–0 |
+| parent-rerender | 1000 | 100 | 10 | Zustand | 0.03 / 0.06 | 0.1 / 0.1 | 0.3 / 0.5 | 0.2 / 0.4 | 0.1 / 0.2 | 0 / 0 | 0–0 |
+| parent-rerender | 1000 | 100 | 10 | Valtio | 0.04 / 0.06 | 5.8 / 6.6 | 10.4 / 11.2 | 4.6 / 5.1 | 0.3 / 0.4 | 0 / 0 | 0–0 |
+| nested-field | 1000 | 1 | 10 | Kinstate | 0.01 / 0.02 | 0.1 / 0.2 | 0.1 / 0.3 | 0 / 0.1 | 0 / 0.1 | 1 / 1 | 10–10 |
+| nested-field | 1000 | 1 | 10 | MobX | 0.01 / 0.01 | 5.3 / 6.4 | 5.5 / 6.5 | 0.1 / 0.2 | 0 / 0 | 1 / 1 | 10–10 |
+| nested-field | 1000 | 1 | 10 | Zustand | 0.01 / 0.01 | 0.2 / 0.3 | 0.2 / 0.5 | 0 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| nested-field | 1000 | 1 | 10 | Valtio | 0.01 / 0.02 | 5.3 / 7 | 5.5 / 7.1 | 0.1 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| array-offscreen-row | 50000 | 100 | 10 | Kinstate | 0 / 0.01 | 9.2 / 12.2 | 10.8 / 13.5 | 1.1 / 1.6 | 0.4 / 0.5 | 0 / 0 | 0–0 |
+| array-offscreen-row | 50000 | 100 | 10 | MobX | 0 / 0.01 | 676.7 / 979.9 | 677.5 / 980.4 | 0.5 / 0.8 | 0.3 / 0.3 | 0 / 0 | 0–0 |
+| array-offscreen-row | 50000 | 100 | 10 | Zustand | 0.03 / 0.12 | 5.4 / 7.7 | 5.8 / 8.1 | 0.4 / 0.5 | 0.3 / 0.3 | 0 / 0 | 0–0 |
+| array-offscreen-row | 50000 | 100 | 10 | Valtio | 0 / 0 | 375.4 / 412.6 | 376.3 / 416.8 | 4.1 / 4.2 | 0.3 / 0.3 | 0 / 0 | 0–0 |
+| map-and-replace | 10000 | 100 | 10 | Kinstate | 31.57 / 32.13 | 5.7 / 8.3 | 9.6 / 381.4 | 1.7 / 378.4 | 0.4 / 0.4 | 100 / 100 | 1000–1000 |
+| map-and-replace | 10000 | 100 | 10 | MobX | 52.82 / 53.75 | 70.9 / 442.8 | 71.5 / 443.4 | 0.6 / 0.6 | 0.3 / 0.4 | 100 / 100 | 1000–1000 |
+| map-and-replace | 10000 | 100 | 10 | Zustand | 0.29 / 37.44 | 1.1 / 417.8 | 1.4 / 418.2 | 0.3 / 0.6 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| map-and-replace | 10000 | 100 | 10 | Valtio | 80.69 / 83.99 | 71 / 78.5 | 143.3 / 152.6 | 72.3 / 77.1 | 5.1 / 6.6 | 1 / 1 | 10–10 |
+| unrelated | 1000 | 1 | 10 | Kinstate | 0 / 0 | 0.2 / 0.2 | 0.3 / 0.4 | 0.1 / 0.2 | 0.1 / 0.1 | 0 / 0 | 0–0 |
+| unrelated | 1000 | 1 | 10 | MobX | 0 / 0 | 5.7 / 5.9 | 5.9 / 6 | 0.1 / 0.2 | 0 / 0.1 | 0 / 0 | 0–0 |
+| unrelated | 1000 | 1 | 10 | Zustand | 0 / 0.01 | 0.2 / 0.2 | 0.2 / 0.4 | 0 / 0.2 | 0.1 / 0.1 | 0 / 0 | 0–0 |
+| unrelated | 1000 | 1 | 10 | Valtio | 0.06 / 0.06 | 5.3 / 6.3 | 10.2 / 10.9 | 4.9 / 5.2 | 0.2 / 0.3 | 0 / 0 | 0–0 |
+| record-churn | 1000 | 1 | 10 | Kinstate | 0 / 0.01 | 0.2 / 0.2 | 0.2 / 0.4 | 0.1 / 0.2 | 0.1 / 0.1 | 0 / 0 | 0–0 |
+| record-churn | 1000 | 1 | 10 | MobX | 0.01 / 0.02 | 5.2 / 6.3 | 5.4 / 6.4 | 0.1 / 0.2 | 0 / 0.1 | 0 / 0 | 0–0 |
+| record-churn | 1000 | 1 | 10 | Zustand | 0.11 / 0.13 | 0.2 / 0.2 | 0.2 / 0.3 | 0.1 / 0.1 | 0 / 0 | 0 / 0 | 0–0 |
+| record-churn | 1000 | 1 | 10 | Valtio | 0.5 / 0.52 | 5.8 / 6.3 | 10.6 / 11.7 | 4.3 / 5.9 | 0.2 / 0.3 | 0 / 0 | 0–0 |
+| immutable-input-filter | 1000 | 1 | 10 | Kinstate | 0.2 / 0.24 | 0.2 / 0.3 | 0.5 / 0.5 | 0.2 / 0.3 | 0 / 0.1 | 1 / 1 | 10–10 |
+| immutable-input-filter | 1000 | 1 | 10 | MobX | 0.15 / 0.16 | 2.9 / 3.3 | 3.1 / 3.5 | 0.2 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| immutable-input-filter | 1000 | 1 | 10 | Zustand | 0.15 / 0.2 | 0.1 / 0.1 | 0.2 / 0.3 | 0.1 / 0.2 | 0 / 0.1 | 1 / 1 | 10–10 |
+| immutable-input-filter | 1000 | 1 | 10 | Valtio | 0.17 / 0.23 | 2.7 / 3.2 | 4.6 / 5.7 | 1.9 / 2.5 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| append | 10000 | 1 | 10 | Kinstate | 0.02 / 0.04 | 1.1 / 4.4 | 1.3 / 4.6 | 0.1 / 0.5 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| append | 10000 | 1 | 10 | MobX | 0.01 / 0.02 | 62.9 / 71.6 | 63.1 / 71.9 | 0.2 / 0.3 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| append | 10000 | 1 | 10 | Zustand | 0.02 / 0.02 | 1 / 1.1 | 1.1 / 1.3 | 0.1 / 0.2 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| append | 10000 | 1 | 10 | Valtio | 17.47 / 18.23 | 55.9 / 71.9 | 121.6 / 145.9 | 63.8 / 74 | 4.8 / 5.3 | 1 / 1 | 10–10 |
+| conditional | 1000 | 1 | 10 | Kinstate | 0.01 / 0.02 | 0.1 / 0.3 | 0.2 / 0.4 | 0.1 / 0.2 | 0 / 0.1 | 0.7 / 0.7 | 7–7 |
+| conditional | 1000 | 1 | 10 | MobX | 0.01 / 0.02 | 6.1 / 7.4 | 6.2 / 7.5 | 0.1 / 0.1 | 0 / 0.1 | 0.7 / 0.7 | 7–7 |
+| conditional | 1000 | 1 | 10 | Zustand | 0.01 / 0.01 | 0.1 / 0.2 | 0.2 / 0.3 | 0.1 / 0.1 | 0 / 0.1 | 0.3 / 0.3 | 3–3 |
+| conditional | 1000 | 1 | 10 | Valtio | 0.05 / 0.19 | 6.1 / 6.4 | 9.6 / 10.6 | 3.8 / 4.3 | 0.1 / 0.2 | 0.7 / 0.7 | 7–7 |
+| filter-sort | 1000 | 1 | 10 | Kinstate | 1.08 / 1.27 | 0.2 / 0.3 | 3.5 / 3.6 | 3.3 / 3.4 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| filter-sort | 1000 | 1 | 10 | MobX | 1.04 / 1.26 | 6.1 / 6.7 | 7.1 / 8.1 | 1.1 / 1.4 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| filter-sort | 1000 | 1 | 10 | Zustand | 0.14 / 0.15 | 0.2 / 0.3 | 0.4 / 0.5 | 0.2 / 0.3 | 0 / 0.1 | 1 / 1 | 10–10 |
+| filter-sort | 1000 | 1 | 10 | Valtio | 2.94 / 3.07 | 6 / 7.1 | 13.6 / 14.2 | 7.5 / 7.6 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| normalized-row | 1000 | 100 | 10 | Kinstate | 0.02 / 0.04 | 0.1 / 0.2 | 0.8 / 1.2 | 0.7 / 1 | 0.3 / 0.6 | 1 / 1 | 10–10 |
+| normalized-row | 1000 | 100 | 10 | MobX | 0.02 / 0.02 | 5.3 / 6.6 | 5.7 / 7 | 0.4 / 0.5 | 0.1 / 0.3 | 1 / 1 | 10–10 |
+| normalized-row | 1000 | 100 | 10 | Zustand | 0.02 / 0.02 | 0.1 / 0.1 | 0.3 / 0.4 | 0.2 / 0.3 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| normalized-row | 1000 | 100 | 10 | Valtio | 0.02 / 0.03 | 5.7 / 6.2 | 6.3 / 6.8 | 0.6 / 0.8 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| full-list-row | 1000 | 1000 | 10 | Kinstate | 0.1 / 0.11 | 0.2 / 0.2 | 4.8 / 5 | 4.6 / 4.8 | 1.5 / 1.8 | 1 / 1 | 10–10 |
+| full-list-row | 1000 | 1000 | 10 | MobX | 0.08 / 0.08 | 5.4 / 5.4 | 7.9 / 8.5 | 2.5 / 3.1 | 1.3 / 1.5 | 1 / 1 | 10–10 |
+| full-list-row | 1000 | 1000 | 10 | Zustand | 0.13 / 0.13 | 0.1 / 0.1 | 1.5 / 1.6 | 1.4 / 1.5 | 1.1 / 1.2 | 1 / 1 | 10–10 |
+| full-list-row | 1000 | 1000 | 10 | Valtio | 0.08 / 0.21 | 5.6 / 6 | 10.5 / 12.4 | 5 / 6.9 | 1.2 / 1.5 | 1 / 1 | 10–10 |
+| array-visible-row | 1000 | 100 | 10 | Kinstate | 0.03 / 0.05 | 0.2 / 11.8 | 1 / 18.6 | 0.8 / 6.8 | 0.3 / 0.4 | 1 / 1 | 10–10 |
+| array-visible-row | 1000 | 100 | 10 | MobX | 0.02 / 0.02 | 5 / 6.7 | 5.5 / 7.1 | 0.4 / 0.5 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| array-visible-row | 1000 | 100 | 10 | Zustand | 0.03 / 0.04 | 0.1 / 0.2 | 0.4 / 0.7 | 0.3 / 0.5 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| array-visible-row | 1000 | 100 | 10 | Valtio | 0.02 / 0.03 | 5.8 / 11.4 | 6.6 / 17.6 | 0.8 / 6.2 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| normalized-row | 10000 | 100 | 10 | Kinstate | 0.03 / 0.03 | 1.3 / 5.8 | 2 / 7.1 | 0.7 / 1.3 | 0.3 / 0.4 | 1 / 1 | 10–10 |
+| normalized-row | 10000 | 100 | 10 | MobX | 0.01 / 0.03 | 60.4 / 69.9 | 60.9 / 70.3 | 0.5 / 0.5 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| normalized-row | 10000 | 100 | 10 | Zustand | 0.02 / 0.06 | 1.1 / 3.9 | 1.3 / 4.5 | 0.2 / 0.6 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| normalized-row | 10000 | 100 | 10 | Valtio | 0.03 / 0.05 | 67.9 / 83.5 | 68.6 / 84.4 | 0.7 / 4.3 | 0.3 / 0.4 | 1 / 1 | 10–10 |
+| batch-100 | 1000 | 1 | 10 | Kinstate | 0.06 / 0.06 | 0.1 / 0.2 | 0.2 / 0.3 | 0.1 / 0.1 | 0 / 0.1 | 1 / 1 | 10–10 |
+| batch-100 | 1000 | 1 | 10 | MobX | 0.03 / 0.04 | 5 / 6.3 | 5 / 6.4 | 0 / 0.1 | 0 / 0.1 | 1 / 1 | 10–10 |
+| batch-100 | 1000 | 1 | 10 | Zustand | 0 / 0 | 0.1 / 0.1 | 0.1 / 0.2 | 0 / 0.1 | 0 / 0.1 | 1 / 1 | 10–10 |
+| batch-100 | 1000 | 1 | 10 | Valtio | 0.1 / 0.16 | 5.2 / 6.6 | 8.8 / 10.9 | 3.6 / 5.7 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| api-frozen | 1000 | 100 | 10 | Kinstate | 0.28 / 0.4 | 0.1 / 0.2 | 0.8 / 1.1 | 0.7 / 0.9 | 0.2 / 0.4 | 100 / 100 | 1000–1000 |
+| api-frozen | 1000 | 100 | 10 | MobX | 3.13 / 3.35 | 5.8 / 6.3 | 6.2 / 6.7 | 0.3 / 0.4 | 0.3 / 0.6 | 100 / 100 | 1000–1000 |
+| api-frozen | 1000 | 100 | 10 | Zustand | 0.11 / 0.19 | 0.2 / 0.2 | 0.5 / 0.6 | 0.3 / 0.4 | 0.2 / 0.2 | 1 / 1 | 10–10 |
+| api-frozen | 1000 | 100 | 10 | Valtio | 1.13 / 1.18 | 6.3 / 7.1 | 11.2 / 12 | 4.7 / 5.7 | 0.2 / 0.3 | 1 / 1 | 10–10 |
+| array-remove | 10000 | 1 | 10 | Kinstate | 0.03 / 0.03 | 1.2 / 4.9 | 1.4 / 5.4 | 0.2 / 0.5 | 0.1 / 0.2 | 1 / 1 | 10–10 |
+| array-remove | 10000 | 1 | 10 | MobX | 0.01 / 0.03 | 70.7 / 74.2 | 71 / 74.3 | 0.1 / 0.3 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| array-remove | 10000 | 1 | 10 | Zustand | 0.01 / 0.02 | 1.1 / 1.2 | 1.1 / 1.3 | 0.1 / 0.1 | 0.1 / 0.1 | 1 / 1 | 10–10 |
+| array-remove | 10000 | 1 | 10 | Valtio | 17.82 / 18.63 | 64.8 / 73.4 | 130.2 / 151.8 | 69.1 / 78.4 | 5.1 / 7 | 1 / 1 | 10–10 |
+| array-visible-row | 50000 | 100 | 10 | Kinstate | 0.03 / 0.03 | 7 / 12.2 | 7.8 / 13.3 | 0.8 / 1.3 | 0.4 / 0.4 | 1 / 1 | 10–10 |
+| array-visible-row | 50000 | 100 | 10 | MobX | 0.02 / 0.02 | 352.1 / 1,109.1 | 352.7 / 1,109.6 | 0.6 / 0.6 | 0.3 / 0.3 | 1 / 1 | 10–10 |
+| array-visible-row | 50000 | 100 | 10 | Zustand | 0.12 / 0.14 | 6.4 / 7.1 | 6.6 / 7.6 | 0.3 / 0.5 | 0.3 / 0.3 | 1 / 1 | 10–10 |
+| array-visible-row | 50000 | 100 | 10 | Valtio | 0.03 / 0.03 | 393.7 / 1,339 | 397.8 / 1,343.4 | 4.1 / 4.8 | 0.3 / 0.3 | 1 / 1 | 10–10 |
+| map-and-replace | 50000 | 100 | 10 | Kinstate | 171.2 / 178.15 | 26.8 / 32 | 28.8 / 35 | 2 / 3 | 0.4 / 0.5 | 100 / 100 | 1000–1000 |
+| map-and-replace | 50000 | 100 | 10 | MobX | 322.79 / 433.5 | 356 / 2,410.1 | 356.6 / 2,410.7 | 0.6 / 0.6 | 0.4 / 0.4 | 100 / 100 | 1000–1000 |
+| map-and-replace | 50000 | 100 | 10 | Zustand | 1.14 / 2.14 | 6.4 / 7.5 | 7 / 8 | 0.5 / 0.9 | 0.3 / 0.4 | 1 / 1 | 10–10 |
+| map-and-replace | 50000 | 100 | 10 | Valtio | 531.61 / 690.88 | 400 / 422.3 | 727.2 / 780.2 | 335.8 / 357.9 | 22.6 / 24.8 | 1 / 1 | 10–10 |
+
+## Workloads
+
+- **bulk-rows-100:** Edit 100 distinct row values in one logical transaction. Each library publishes one batch; Zustand copies the array once.
+- **array-offscreen-row:** Edit a row outside the mounted consumer window; no virtualization library is involved.
+- **filter-sort:** Promote one source row, filter and sort the collection into its top 100 entries, and render the first result in one consumer.
+- **api-payload:** Create a fresh plain incoming payload without reading existing reactive rows, then assign it. Includes identical payload allocation and library-specific adoption costs.
+- **array-reorder:** Reverse the array while 100 consumers observe their current row index.
+- **array-remove:** Remove the last row and observe collection length.
+- **single-field:** Update a primitive field observed by one mounted consumer.
+- **map-and-replace:** Map the existing reactive array into fresh row objects, change the first value, and replace the array. Includes reading observable rows and allocating/reobserving the replacement; this is not a plain incoming API payload assignment.
+- **append:** Append a record to the collection.
+- **array-visible-row:** Edit a row rendered by the mounted list consumers.
+- **api-frozen:** Create a deeply frozen incoming row payload and assign it. Tests immutable external data handling with identical freeze/allocation work.
+- **shared-fanout:** Update one shared field observed by all consumers.
+- **full-list-row:** Mount one DOM consumer for every record, then edit one row. Collection size equals mounted consumer count; no virtualization.
+- **immutable-input-filter:** Filter/sort a newly supplied immutable plain API payload. Kinstate uses serviceInputs, MobX observable.ref, Valtio ref, and Zustand immutable state; all observe root replacement and avoid deep proxying the payload.
+- **normalized-row:** Edit one record addressed by its key in normalized state.
+- **no-op:** Assign the current value back to itself. Measures the equality-check and scheduling floor without a state change.
+- **parent-rerender:** Rerender the parent, including the service provider, while memoized consumers retain unchanged props and state. Measures memo bailout overhead.
+- **nested-field:** Update one field inside a nested object.
+- **unrelated:** Change an unobserved field while every mounted consumer observes another field.
+- **record-churn:** Insert and delete a transient record key within one transaction; visible state remains unchanged. Heap retention is tested separately.
+- **conditional:** Alternate branch switches, writes to the inactive branch, and writes to the active branch, exercising dependency replacement.
+- **batch-100:** Perform 100 synchronous field mutations in each scheduled operation.
+
+## Environment
+
+| Field | Value |
+| --- | --- |
+| frameworkVersion | 0.1.0 |
+| node | v24.16.0 |
+| platform | linux |
+| arch | x64 |
+| cpu | AMD Ryzen 7 3700X 8-Core Processor |
+| logicalCpus | 16 |
+| memoryGiB | 31.3 |
+| browser | 156.0.8078.4 |
+| userAgent | Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36 |
+| mode | production |
+| renderer | React DOM in headless Chromium |
+| viewport | 1280 × 800 |
+| versions | {"react":"19.3.1","react-dom":"19.3.1","mobx":"6.16.1","mobx-react-lite":"4.1.1","zustand":"5.0.15","valtio":"2.3.2","vite":"7.3.7"} |
+
+## Methodology references
+
+- [React flushSync](https://react.dev/reference/react-dom/flushSync): controlled synchronous commit checkpoints can affect performance.
+- [MobX understanding reactivity](https://mobx.js.org/understanding-reactivity.html): observable property and array dependency behavior.
+- [Zustand immutable state and merging](https://zustand.docs.pmnd.rs/learn/guides/immutable-state-and-merging): immutable updates and merge behavior.
+- [Valtio useSnapshot](https://valtio.dev/docs/api/basic/useSnapshot): render access tracking through snapshots.
+
+## Limits
+
+- Measures JavaScript execution and React work; does not measure paint, network latency, or a virtualization library.
+- Single machine, single browser process, sequential warmed runs; timings are not cross-device performance guarantees.
+- Headless browser commit latency excludes paint, layout measurement, network, real API libraries and user-event dispatch.
+- Large arrays use a bounded visible window; this is not a virtualization-library benchmark.
+- Zustand uses one structurally shared immutable publication per transaction; proxy libraries mutate in place. Representation costs are included.
+- Results are scenario-specific. Do not combine different workloads into an overall winner.
+- Fresh stores and roots for every sample; setup and teardown are measured separately. No forced garbage collection; allocation and GC can affect outliers.
+
+Full sample data is preserved in the JSON report. The standalone HTML includes an embedded copy and a download button.

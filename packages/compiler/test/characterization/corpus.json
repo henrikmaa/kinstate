@@ -1,0 +1,1145 @@
+[
+  {
+    "name": "scalar-and-hook",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const [local]=useState(1);return <div>{s.count+local}</div>}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  const [local] = useState(1);\n  return _serviceFrame.finish(<div>{_serviceFrame.track(() => s.count) + local}</div>);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "local",
+          "useState",
+          "finish",
+          "track",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "scalar-and-hook.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const [local]=useState(1);return <div>{s.count+local}</div>}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,MAAM,CAACI,KAAK,CAAC,GAACC,QAAQ,CAAC,CAAC,CAAC;EAAC,OAAAL,aAAA,CAAAM,MAAA,CAAO,CAAC,GAAG,CAAC,CAACN,aAAA,CAAAO,KAAA,OAAAL,CAAC,CAACM,KAAK,IAACJ,KAAK,CAAC,EAAE,GAAG,CAAC;EAAAJ,aAAA,CAAAM,MAAA,CAAAG,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "multiple-services",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const a=useService(A),b=useService(B);return <div>{a.count+b.name}</div>}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const a = useService(A, _serviceFrame),\n    b = useService(B, _serviceFrame);\n  return _serviceFrame.finish(<div>{_serviceFrame.track(() => a.count) + _serviceFrame.track(() => b.name)}</div>);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "a",
+          "A",
+          "b",
+          "B",
+          "finish",
+          "track",
+          "count",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "multiple-services.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const a=useService(A),b=useService(B);return <div>{a.count+b.name}</div>}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;IAACI,CAAC,GAACN,UAAU,CAACO,CAAC,EAAAL,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAM,MAAA,CAAO,CAAC,GAAG,CAAC,CAACN,aAAA,CAAAO,KAAA,OAAAL,CAAC,CAACM,KAAK,IAAAR,aAAA,CAAAO,KAAA,OAACH,CAAC,CAACK,IAAI,EAAC,EAAE,GAAG,CAAC;EAAAT,aAAA,CAAAM,MAAA,CAAAI,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "conditional-returns",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);if(s.loading)return null;return s.enabled?s.first:s.second;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  if (_serviceFrame.track(() => s.loading)) return _serviceFrame.finish(null);\n  return _serviceFrame.finish(_serviceFrame.track(() => s.enabled) ? _serviceFrame.track(() => s.first) : _serviceFrame.track(() => s.second));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "track",
+          "loading",
+          "finish",
+          "enabled",
+          "first",
+          "second",
+          "undefined"
+        ],
+        "sources": [
+          "conditional-returns.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);if(s.loading)return null;return s.enabled?s.first:s.second;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,IAAAA,aAAA,CAAAI,KAAA,OAAGF,CAAC,CAACG,OAAO,GAAC,OAAAL,aAAA,CAAAM,MAAA,CAAO,IAAI;EAAC,OAAAN,aAAA,CAAAM,MAAA,CAAON,aAAA,CAAAI,KAAA,OAAAF,CAAC,CAACK,OAAO,IAAAP,aAAA,CAAAI,KAAA,OAACF,CAAC,CAACM,KAAK,IAAAR,aAAA,CAAAI,KAAA,OAACF,CAAC,CAACO,MAAM;EAACT,aAAA,CAAAM,MAAA,CAAAI,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "aliased-service-hook",
+    "source": "import {useService as useModel} from '@react-service/react';\nexport const View=()=>{const model=useModel(S);return model.count;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService as useModel } from '@react-service/react';\nexport const View = () => {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const model = useModel(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => model.count));\n  _serviceFrame.finish(undefined);\n};",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "useModel",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "model",
+          "S",
+          "finish",
+          "track",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "aliased-service-hook.tsx"
+        ],
+        "sourcesContent": [
+          "import {useService as useModel} from '@react-service/react';\nexport const View=()=>{const model=useModel(S);return model.count;}"
+        ],
+        "mappings": ";AAAA,SAAQA,UAAU,IAAIC,QAAQ,QAAO,sBAAsB;AAC3D,OAAO,MAAMC,IAAI,GAACA,CAAA,KAAI;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,KAAK,GAACJ,QAAQ,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAAJ,aAAA,CAAAK,KAAA,OAAOH,KAAK,CAACI,KAAK;EAACN,aAAA,CAAAI,MAAA,CAAAG,SAAA;AAAA,CAAC",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "namespace-service-hook",
+    "source": "import * as services from '@react-service/react';\nfunction View(){const s=services.useService(S);return s.count;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport * as services from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = services.useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => s.count));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "services",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "useService",
+          "S",
+          "finish",
+          "track",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "namespace-service-hook.tsx"
+        ],
+        "sourcesContent": [
+          "import * as services from '@react-service/react';\nfunction View(){const s=services.useService(S);return s.count;}"
+        ],
+        "mappings": ";AAAA,OAAO,KAAKA,QAAQ,MAAM,sBAAsB;AAChD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,QAAQ,CAACK,UAAU,CAACC,CAAC,EAAAJ,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAK,MAAA,CAAAL,aAAA,CAAAM,KAAA,OAAOJ,CAAC,CAACK,KAAK;EAACP,aAAA,CAAAK,MAAA,CAAAG,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "namespace-react-wrapper",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nconst View=React.memo(()=>{const s=useService(S);return <div>{s.count}</div>});",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nconst View = React.memo(() => {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(<div>{_serviceFrame.track(() => s.count)}</div>);\n  _serviceFrame.finish(undefined);\n});",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "React",
+          "memo",
+          "forwardRef",
+          "useMemo",
+          "useCallback",
+          "useEffect",
+          "createElement",
+          "element",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "namespace-react-wrapper.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nconst View=React.memo(()=>{const s=useService(S);return <div>{s.count}</div>});"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,OAAOC,KAAK,IAAGC,IAAI,EAAEC,UAAU,EAAEC,OAAO,EAAEC,WAAW,EAAEC,SAAS,EAAEC,aAAa,IAAIC,OAAO,QAAO,OAAO;AACxG,MAAMC,IAAI,GAACR,KAAK,CAACC,IAAI,CAAC,MAAI;EAAA;;EAAA,MAAAQ,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACZ,UAAU,CAACa,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAO,CAAC,GAAG,CAAC,CAAAJ,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACI,KAAK,EAAC,EAAE,GAAG,CAAC;EAAAN,aAAA,CAAAI,MAAA,CAAAG,SAAA;AAAA,CAAC,CAAC",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "anonymous-memo",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nexport default memo(()=>{const s=useService(S);return <div>{s.count}</div>});",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nexport default memo(() => {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(<div>{_serviceFrame.track(() => s.count)}</div>);\n  _serviceFrame.finish(undefined);\n});",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "React",
+          "memo",
+          "forwardRef",
+          "useMemo",
+          "useCallback",
+          "useEffect",
+          "createElement",
+          "element",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "anonymous-memo.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nexport default memo(()=>{const s=useService(S);return <div>{s.count}</div>});"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,OAAOC,KAAK,IAAGC,IAAI,EAAEC,UAAU,EAAEC,OAAO,EAAEC,WAAW,EAAEC,SAAS,EAAEC,aAAa,IAAIC,OAAO,QAAO,OAAO;AACxG,eAAeN,IAAI,CAAC,MAAI;EAAA;;EAAA,MAAAO,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACX,UAAU,CAACY,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAO,CAAC,GAAG,CAAC,CAAAJ,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACI,KAAK,EAAC,EAAE,GAAG,CAAC;EAAAN,aAAA,CAAAI,MAAA,CAAAG,SAAA;AAAA,CAAC,CAAC",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "forward-ref-memo",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nconst View=memo(forwardRef((props,ref)=>{const s=useService(S);return <input ref={ref} value={s.name}/>;}));",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nconst View = memo(forwardRef((props, ref) => {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(<input ref={ref} value={_serviceFrame.track(() => s.name)} />);\n  _serviceFrame.finish(undefined);\n}));",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "React",
+          "memo",
+          "forwardRef",
+          "useMemo",
+          "useCallback",
+          "useEffect",
+          "createElement",
+          "element",
+          "View",
+          "props",
+          "ref",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "forward-ref-memo.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nconst View=memo(forwardRef((props,ref)=>{const s=useService(S);return <input ref={ref} value={s.name}/>;}));"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,OAAOC,KAAK,IAAGC,IAAI,EAAEC,UAAU,EAAEC,OAAO,EAAEC,WAAW,EAAEC,SAAS,EAAEC,aAAa,IAAIC,OAAO,QAAO,OAAO;AACxG,MAAMC,IAAI,GAACP,IAAI,CAACC,UAAU,CAAC,CAACO,KAAK,EAACC,GAAG,KAAG;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACd,UAAU,CAACe,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAO,CAAC,KAAK,CAAC,GAAG,CAAC,CAACL,GAAG,CAAC,CAAC,KAAK,CAAC,CAAAC,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACI,IAAI,EAAC,GAAE;EAACN,aAAA,CAAAI,MAAA,CAAAG,SAAA;AAAA,CAAC,CAAC,CAAC",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "custom-props-and-command",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return <Widget name={s.name} onChange={s.rename}>{s.count}</Widget>}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(<Widget name={_serviceFrame.boundary(_serviceFrame.track(() => s.name), \"value\")} onChange={_serviceFrame.boundary(_serviceFrame.track(() => s.rename), \"command\")}>{_serviceFrame.boundary(_serviceFrame.track(() => s.count), \"value\")}</Widget>);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "boundary",
+          "track",
+          "name",
+          "rename",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "custom-props-and-command.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return <Widget name={s.name} onChange={s.rename}>{s.count}</Widget>}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAO,CAAC,MAAM,CAAC,IAAI,CAAC,CAAAJ,aAAA,CAAAK,QAAA,CAAAL,aAAA,CAAAM,KAAA,OAACJ,CAAC,CAACK,IAAI,YAAC,CAAC,QAAQ,CAAC,CAAAP,aAAA,CAAAK,QAAA,CAAAL,aAAA,CAAAM,KAAA,OAACJ,CAAC,CAACM,MAAM,cAAC,CAAC,CAAAR,aAAA,CAAAK,QAAA,CAAAL,aAAA,CAAAM,KAAA,OAACJ,CAAC,CAACO,KAAK,YAAC,EAAE,MAAM,CAAC;EAAAT,aAAA,CAAAI,MAAA,CAAAM,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "custom-projected-rows",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const rows=s.rows.map(row=>({id:row.id,name:row.name}));return <List rows={rows}/>;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  const rows = _serviceFrame.track(() => _serviceFrame.track(() => s.rows).map(row => ({\n    id: _serviceFrame.track(() => row.id),\n    name: _serviceFrame.track(() => row.name)\n  })));\n  return _serviceFrame.finish(<List rows={_serviceFrame.boundary(rows, \"value\")} />);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "rows",
+          "track",
+          "map",
+          "row",
+          "id",
+          "name",
+          "finish",
+          "boundary",
+          "undefined"
+        ],
+        "sources": [
+          "custom-projected-rows.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const rows=s.rows.map(row=>({id:row.id,name:row.name}));return <List rows={rows}/>;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,MAAMI,IAAI,GAAAJ,aAAA,CAAAK,KAAA,OAACL,aAAA,CAAAK,KAAA,OAAAH,CAAC,CAACE,IAAI,EAACE,GAAG,CAACC,GAAG,KAAG;IAACC,EAAE,EAAAR,aAAA,CAAAK,KAAA,OAACE,GAAG,CAACC,EAAE;IAACC,IAAI,EAAAT,aAAA,CAAAK,KAAA,OAACE,GAAG,CAACE,IAAI;EAAA,CAAC,CAAC,CAAC;EAAC,OAAAT,aAAA,CAAAU,MAAA,CAAO,CAAC,IAAI,CAAC,IAAI,CAAC,CAAAV,aAAA,CAAAW,QAAA,CAACP,IAAI,WAAC,GAAE;EAACJ,aAAA,CAAAU,MAAA,CAAAE,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "create-element-alias",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);return element(Widget,{label:s.name,onClick:()=>s.increment()},s.count);}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => element(Widget, {\n    label: _serviceFrame.boundary(_serviceFrame.track(() => s.name), \"value\"),\n    onClick: _serviceFrame.boundary(() => _serviceFrame.track(() => s.increment()), \"command\")\n  }, _serviceFrame.boundary(_serviceFrame.track(() => s.count), \"value\"))));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "React",
+          "memo",
+          "forwardRef",
+          "useMemo",
+          "useCallback",
+          "useEffect",
+          "createElement",
+          "element",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "Widget",
+          "label",
+          "boundary",
+          "name",
+          "onClick",
+          "increment",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "create-element-alias.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);return element(Widget,{label:s.name,onClick:()=>s.increment()},s.count);}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,OAAOC,KAAK,IAAGC,IAAI,EAAEC,UAAU,EAAEC,OAAO,EAAEC,WAAW,EAAEC,SAAS,EAAEC,aAAa,IAAIC,OAAO,QAAO,OAAO;AACxG,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACZ,UAAU,CAACa,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAAJ,aAAA,CAAAK,KAAA,OAAOP,OAAO,CAACQ,MAAM,EAAC;IAACC,KAAK,EAAAP,aAAA,CAAAQ,QAAA,CAAAR,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACO,IAAI;IAACC,OAAO,EAAAV,aAAA,CAAAQ,QAAA,CAAC,MAAAR,aAAA,CAAAK,KAAA,OAAIH,CAAC,CAACS,SAAS,CAAC,CAAC;EAAA,CAAC,EAAAX,aAAA,CAAAQ,QAAA,CAAAR,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACU,KAAK,YAAC;EAACZ,aAAA,CAAAI,MAAA,CAAAS,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "create-element-spread",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);return element(Widget,{...s.options,label:s.name});}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => element(Widget, _serviceFrame.track(() => ({\n    ..._serviceFrame.boundary(_serviceFrame.track(() => s.options), \"value\"),\n    label: _serviceFrame.boundary(_serviceFrame.track(() => s.name), \"value\")\n  })))));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "React",
+          "memo",
+          "forwardRef",
+          "useMemo",
+          "useCallback",
+          "useEffect",
+          "createElement",
+          "element",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "Widget",
+          "boundary",
+          "options",
+          "label",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "create-element-spread.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);return element(Widget,{...s.options,label:s.name});}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,OAAOC,KAAK,IAAGC,IAAI,EAAEC,UAAU,EAAEC,OAAO,EAAEC,WAAW,EAAEC,SAAS,EAAEC,aAAa,IAAIC,OAAO,QAAO,OAAO;AACxG,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACZ,UAAU,CAACa,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAAJ,aAAA,CAAAK,KAAA,OAAOP,OAAO,CAACQ,MAAM,EAAAN,aAAA,CAAAK,KAAA,QAAC;IAAC,GAAAL,aAAA,CAAAO,QAAA,CAAAP,aAAA,CAAAK,KAAA,OAAGH,CAAC,CAACM,OAAO;IAACC,KAAK,EAAAT,aAAA,CAAAO,QAAA,CAAAP,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACQ,IAAI;EAAA,CAAC,GAAC;EAACV,aAAA,CAAAI,MAAA,CAAAO,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "memoized-command-effect",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);const command=useCallback(()=>s.save(),[s]);useEffect(()=>{s.connect();return ()=>s.disconnect()},[s]);return <Widget onSave={command} label={s.name}/>;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  const command = useCallback(() => _serviceFrame.track(() => s.save()), [s]);\n  useEffect(() => {\n    _serviceFrame.track(() => s.connect());\n    return () => _serviceFrame.track(() => s.disconnect());\n  }, [s]);\n  return _serviceFrame.finish(<Widget onSave={_serviceFrame.boundary(command, \"command\")} label={_serviceFrame.boundary(_serviceFrame.track(() => s.name), \"value\")} />);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "React",
+          "memo",
+          "forwardRef",
+          "useMemo",
+          "useCallback",
+          "useEffect",
+          "createElement",
+          "element",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "command",
+          "track",
+          "save",
+          "connect",
+          "disconnect",
+          "finish",
+          "boundary",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "memoized-command-effect.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);const command=useCallback(()=>s.save(),[s]);useEffect(()=>{s.connect();return ()=>s.disconnect()},[s]);return <Widget onSave={command} label={s.name}/>;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,OAAOC,KAAK,IAAGC,IAAI,EAAEC,UAAU,EAAEC,OAAO,EAAEC,WAAW,EAAEC,SAAS,EAAEC,aAAa,IAAIC,OAAO,QAAO,OAAO;AACxG,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACZ,UAAU,CAACa,CAAC,EAAAH,aAAA,CAAC;EAAC,MAAMI,OAAO,GAACT,WAAW,CAAC,MAAAK,aAAA,CAAAK,KAAA,OAAIH,CAAC,CAACI,IAAI,CAAC,CAAC,GAAC,CAACJ,CAAC,CAAC,CAAC;EAACN,SAAS,CAAC,MAAI;IAACI,aAAA,CAAAK,KAAA,OAAAH,CAAC,CAACK,OAAO,CAAC,CAAC;IAAC,OAAO,MAAAP,aAAA,CAAAK,KAAA,OAAIH,CAAC,CAACM,UAAU,CAAC,CAAC;EAAA,CAAC,EAAC,CAACN,CAAC,CAAC,CAAC;EAAC,OAAAF,aAAA,CAAAS,MAAA,CAAO,CAAC,MAAM,CAAC,MAAM,CAAC,CAAAT,aAAA,CAAAU,QAAA,CAACN,OAAO,aAAC,CAAC,KAAK,CAAC,CAAAJ,aAAA,CAAAU,QAAA,CAAAV,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACS,IAAI,YAAC,GAAE;EAACX,aAAA,CAAAS,MAAA,CAAAG,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "optional-method-chain",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return s.user?.format?.(s.prefix)?.label ?? s.fallback;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => s.user?.format?.(_serviceFrame.track(() => s.prefix))?.label) ?? _serviceFrame.track(() => s.fallback));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "user",
+          "format",
+          "prefix",
+          "label",
+          "fallback",
+          "undefined"
+        ],
+        "sources": [
+          "optional-method-chain.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return s.user?.format?.(s.prefix)?.label ?? s.fallback;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAOJ,aAAA,CAAAK,KAAA,OAAAH,CAAC,CAACI,IAAI,EAAEC,MAAM,GAAAP,aAAA,CAAAK,KAAA,OAAGH,CAAC,CAACM,MAAM,EAAC,EAAEC,KAAK,KAAAT,aAAA,CAAAK,KAAA,OAAIH,CAAC,CAACQ,QAAQ;EAACV,aAAA,CAAAI,MAAA,CAAAO,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "parenthesized-optional-chain",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return (s.user?.format)(s.prefix);}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => (s.user?.format)(_serviceFrame.track(() => s.prefix))));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "user",
+          "format",
+          "prefix",
+          "undefined"
+        ],
+        "sources": [
+          "parenthesized-optional-chain.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return (s.user?.format)(s.prefix);}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAAJ,aAAA,CAAAK,KAAA,OAAO,CAACH,CAAC,CAACI,IAAI,EAAEC,MAAM,EAAAP,aAAA,CAAAK,KAAA,OAAEH,CAAC,CAACM,MAAM,EAAC;EAACR,aAAA,CAAAI,MAAA,CAAAK,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "typescript-optional-wrappers",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return ((s.user as User)?.name!) satisfies string;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => (_serviceFrame.track(() => s.user) as User)?.name)! satisfies string);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "user",
+          "User",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "typescript-optional-wrappers.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return ((s.user as User)?.name!) satisfies string;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAQJ,aAAA,CAAAK,KAAA,QAACL,aAAA,CAAAK,KAAA,OAAAH,CAAC,CAACI,IAAI,KAAIC,IAAI,GAAGC,IAAI,EAAC,WAAY,MAAM;EAACR,aAAA,CAAAI,MAAA,CAAAK,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "optional-delete-event",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return <button onClick={()=>delete s.user?.temporary}>{s.count}</button>}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(<button onClick={() => _serviceFrame.track(() => delete s.user?.temporary)}>{_serviceFrame.track(() => s.count)}</button>);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "user",
+          "temporary",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "optional-delete-event.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return <button onClick={()=>delete s.user?.temporary}>{s.count}</button>}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAO,CAAC,MAAM,CAAC,OAAO,CAAC,CAAC,MAAAJ,aAAA,CAAAK,KAAA,OAAI,OAAOH,CAAC,CAACI,IAAI,EAAEC,SAAS,EAAC,CAAC,CAAAP,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACM,KAAK,EAAC,EAAE,MAAM,CAAC;EAAAR,aAAA,CAAAI,MAAA,CAAAK,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "membership-and-iteration",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const keys=Object.keys(s.record);return (\"name\" in s.record)?keys.join(\",\"):s.fallback;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  const keys = _serviceFrame.track(() => Object.keys(_serviceFrame.track(() => s.record)));\n  return _serviceFrame.finish(_serviceFrame.track(() => \"name\" in _serviceFrame.track(() => s.record)) ? _serviceFrame.track(() => keys.join(\",\")) : _serviceFrame.track(() => s.fallback));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "keys",
+          "track",
+          "Object",
+          "record",
+          "finish",
+          "join",
+          "fallback",
+          "undefined"
+        ],
+        "sources": [
+          "membership-and-iteration.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const keys=Object.keys(s.record);return (\"name\" in s.record)?keys.join(\",\"):s.fallback;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,MAAMI,IAAI,GAAAJ,aAAA,CAAAK,KAAA,OAACC,MAAM,CAACF,IAAI,CAAAJ,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACK,MAAM,EAAC;EAAC,OAAAP,aAAA,CAAAQ,MAAA,CAAOR,aAAA,CAAAK,KAAA,OAAC,MAAM,IAAAL,aAAA,CAAAK,KAAA,OAAIH,CAAC,CAACK,MAAM,KAAAP,aAAA,CAAAK,KAAA,OAAED,IAAI,CAACK,IAAI,CAAC,GAAG,CAAC,IAAAT,aAAA,CAAAK,KAAA,OAACH,CAAC,CAACQ,QAAQ;EAACV,aAAA,CAAAQ,MAAA,CAAAG,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "for-of-pattern",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let total=0;for(const {amount=1} of s.items){total+=amount;}return total;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  let total = 0;\n  for (const _serviceItem of _serviceFrame.iterate(_serviceFrame.track(() => s.items))) {\n    const {\n      amount\n    } = _serviceFrame.track(() => {\n      const {\n        amount = 1\n      } = _serviceItem;\n      return {\n        amount\n      };\n    });\n    {\n      total += amount;\n    }\n  }\n  return _serviceFrame.finish(total);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "total",
+          "_serviceItem",
+          "iterate",
+          "track",
+          "items",
+          "amount",
+          "finish",
+          "undefined"
+        ],
+        "sources": [
+          "for-of-pattern.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let total=0;for(const {amount=1} of s.items){total+=amount;}return total;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,IAAII,KAAK,GAAC,CAAC;EAAC,WAAAC,YAAA,IAAAL,aAAA,CAAAM,OAAA,CAAAN,aAAA,CAAAO,KAAA,OAAwBL,CAAC,CAACM,KAAK;IAAA;MAAAC;IAAA,IAAAT,aAAA,CAAAO,KAAA;MAAA,MAArB;QAACE,MAAM,GAAC;MAAC,CAAC,GAAAJ,YAAA;MAAA;QAAAI;MAAA;IAAA;IAAY;MAACL,KAAK,IAAEK,MAAM;IAAC;EAAC;EAAA,OAAAT,aAAA,CAAAU,MAAA,CAAON,KAAK;EAACJ,aAAA,CAAAU,MAAA,CAAAC,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "for-of-nested-pattern",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let value=\"\";for(const {profile:{name},...rest} of s.items){value+=name+rest.id;}return value;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  let value = \"\";\n  for (const _serviceItem of _serviceFrame.iterate(_serviceFrame.track(() => s.items))) {\n    const {\n      rest,\n      name\n    } = _serviceFrame.track(() => {\n      const {\n        profile: {\n          name\n        },\n        ...rest\n      } = _serviceItem;\n      return {\n        rest,\n        name\n      };\n    });\n    {\n      value += name + _serviceFrame.track(() => rest.id);\n    }\n  }\n  return _serviceFrame.finish(value);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "value",
+          "_serviceItem",
+          "iterate",
+          "track",
+          "items",
+          "rest",
+          "name",
+          "profile",
+          "id",
+          "finish",
+          "undefined"
+        ],
+        "sources": [
+          "for-of-nested-pattern.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let value=\"\";for(const {profile:{name},...rest} of s.items){value+=name+rest.id;}return value;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,IAAII,KAAK,GAAC,EAAE;EAAC,WAAAC,YAAA,IAAAL,aAAA,CAAAM,OAAA,CAAAN,aAAA,CAAAO,KAAA,OAAsCL,CAAC,CAACM,KAAK;IAAA;MAAAC,IAAA;MAAAC;IAAA,IAAAV,aAAA,CAAAO,KAAA;MAAA,MAAnC;QAACI,OAAO,EAAC;UAACD;QAAI,CAAC;QAAC,GAAGD;MAAI,CAAC,GAAAJ,YAAA;MAAA;QAAAI,IAAA;QAAAC;MAAA;IAAA;IAAY;MAACN,KAAK,IAAEM,IAAI,GAAAV,aAAA,CAAAO,KAAA,OAACE,IAAI,CAACG,EAAE;IAAC;EAAC;EAAA,OAAAZ,aAAA,CAAAa,MAAA,CAAOT,KAAK;EAACJ,aAAA,CAAAa,MAAA,CAAAC,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "for-of-label-block",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let value=0;outer:for(const [first,...rest] of s.rows){const first=2;if(rest.length)continue outer;value+=first;}return value;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  let value = 0;\n  outer: for (const _serviceItem of _serviceFrame.iterate(_serviceFrame.track(() => s.rows))) {\n    const {\n      first,\n      rest\n    } = _serviceFrame.track(() => {\n      const [first, ...rest] = _serviceItem;\n      return {\n        first,\n        rest\n      };\n    });\n    {\n      const first = 2;\n      if (_serviceFrame.track(() => rest.length)) continue outer;\n      value += first;\n    }\n  }\n  return _serviceFrame.finish(value);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "value",
+          "outer",
+          "_serviceItem",
+          "iterate",
+          "track",
+          "rows",
+          "first",
+          "rest",
+          "length",
+          "finish",
+          "undefined"
+        ],
+        "sources": [
+          "for-of-label-block.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let value=0;outer:for(const [first,...rest] of s.rows){const first=2;if(rest.length)continue outer;value+=first;}return value;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,IAAII,KAAK,GAAC,CAAC;EAACC,KAAK,EAAC,WAAAC,YAAA,IAAAN,aAAA,CAAAO,OAAA,CAAAP,aAAA,CAAAQ,KAAA,OAA6BN,CAAC,CAACO,IAAI;IAAA;MAAAC,KAAA;MAAAC;IAAA,IAAAX,aAAA,CAAAQ,KAAA;MAAA,MAAzB,CAACE,KAAK,EAAC,GAAGC,IAAI,CAAC,GAAAL,YAAA;MAAA;QAAAI,KAAA;QAAAC;MAAA;IAAA;IAAW;MAAC,MAAMD,KAAK,GAAC,CAAC;MAAC,IAAAV,aAAA,CAAAQ,KAAA,OAAGG,IAAI,CAACC,MAAM,GAAC,SAASP,KAAK;MAACD,KAAK,IAAEM,KAAK;IAAC;EAAC;EAAA,OAAAV,aAAA,CAAAa,MAAA,CAAOT,KAAK;EAACJ,aAAA,CAAAa,MAAA,CAAAC,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "for-of-var-binding",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);for(var {name} of s.items) consume(name);return name;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  for (var _serviceItem of _serviceFrame.iterate(_serviceFrame.track(() => s.items))) {\n    var name;\n    _serviceFrame.track(() => ({\n      name\n    } = _serviceItem));\n    _serviceFrame.track(() => consume(name));\n  }\n  return _serviceFrame.finish(name);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "_serviceItem",
+          "iterate",
+          "track",
+          "items",
+          "name",
+          "consume",
+          "finish",
+          "undefined"
+        ],
+        "sources": [
+          "for-of-var-binding.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);for(var {name} of s.items) consume(name);return name;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,SAAAI,YAAA,IAAAJ,aAAA,CAAAK,OAAA,CAAAL,aAAA,CAAAM,KAAA,OAAkBJ,CAAC,CAACK,KAAK;IAAA,IAAAC,IAAA;IAAAR,aAAA,CAAAM,KAAA,QAAjB;MAACE;IAAI,CAAC,GAAAJ,YAAA;IAAaJ,aAAA,CAAAM,KAAA,OAAAG,OAAO,CAACD,IAAI,CAAC;EAAC;EAAA,OAAAR,aAAA,CAAAU,MAAA,CAAOF,IAAI;EAACR,aAAA,CAAAU,MAAA,CAAAC,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "for-of-assignment-pattern",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let name;for({name} of s.items){consume(name)}return name;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  let name;\n  for (const _serviceItem of _serviceFrame.iterate(_serviceFrame.track(() => s.items))) {\n    _serviceFrame.track(() => ({\n      name\n    } = _serviceItem));\n    {\n      _serviceFrame.track(() => consume(name));\n    }\n  }\n  return _serviceFrame.finish(name);\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "name",
+          "_serviceItem",
+          "iterate",
+          "track",
+          "items",
+          "consume",
+          "finish",
+          "undefined"
+        ],
+        "sources": [
+          "for-of-assignment-pattern.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let name;for({name} of s.items){consume(name)}return name;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,IAAII,IAAI;EAAC,WAAAC,YAAA,IAAAL,aAAA,CAAAM,OAAA,CAAAN,aAAA,CAAAO,KAAA,OAAcL,CAAC,CAACM,KAAK;IAAAR,aAAA,CAAAO,KAAA,QAAjB;MAACH;IAAI,CAAC,GAAAC,YAAA;IAAY;MAACL,aAAA,CAAAO,KAAA,OAAAE,OAAO,CAACL,IAAI,CAAC;IAAA;EAAC;EAAA,OAAAJ,aAAA,CAAAU,MAAA,CAAON,IAAI;EAACJ,aAAA,CAAAU,MAAA,CAAAC,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "destructuring-declaration",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const {name:label=\"none\",nested:{value},...rest}=s.data;return label+value+rest.extra;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  const {\n    rest,\n    label,\n    value\n  } = _serviceFrame.track(() => {\n    const {\n      name: label = \"none\",\n      nested: {\n        value\n      },\n      ...rest\n    } = _serviceFrame.track(() => s.data);\n    return {\n      rest,\n      label,\n      value\n    };\n  });\n  return _serviceFrame.finish(label + value + _serviceFrame.track(() => rest.extra));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "rest",
+          "label",
+          "value",
+          "track",
+          "name",
+          "nested",
+          "data",
+          "finish",
+          "extra",
+          "undefined"
+        ],
+        "sources": [
+          "destructuring-declaration.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);const {name:label=\"none\",nested:{value},...rest}=s.data;return label+value+rest.extra;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,MAAM;IAAAI,IAAA;IAAAC,KAAA;IAAAC;EAAA,IAAAN,aAAA,CAAAO,KAAA;IAAA;MAACC,IAAI,EAACH,KAAK,GAAC,MAAM;MAACI,MAAM,EAAC;QAACH;MAAK,CAAC;MAAC,GAAGF;IAAI,CAAC,GAAAJ,aAAA,CAAAO,KAAA,OAACL,CAAC,CAACQ,IAAI;IAAA;MAAAN,IAAA;MAAAC,KAAA;MAAAC;IAAA;EAAA;EAAC,OAAAN,aAAA,CAAAW,MAAA,CAAON,KAAK,GAACC,KAAK,GAAAN,aAAA,CAAAO,KAAA,OAACH,IAAI,CAACQ,KAAK;EAACZ,aAAA,CAAAW,MAAA,CAAAE,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "destructuring-assignment-result",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let name,other;const result=({name,other=s.fallback}=s.data);return name+other+result.id;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  let name, other;\n  const result = _serviceFrame.track(() => ({\n    name,\n    other = _serviceFrame.track(() => s.fallback)\n  } = _serviceFrame.track(() => s.data)));\n  return _serviceFrame.finish(name + other + _serviceFrame.track(() => result.id));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "name",
+          "other",
+          "result",
+          "track",
+          "fallback",
+          "data",
+          "finish",
+          "id",
+          "undefined"
+        ],
+        "sources": [
+          "destructuring-assignment-result.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);let name,other;const result=({name,other=s.fallback}=s.data);return name+other+result.id;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,IAAII,IAAI,EAACC,KAAK;EAAC,MAAMC,MAAM,GAAAN,aAAA,CAAAO,KAAA,QAAE;IAACH,IAAI;IAACC,KAAK,GAAAL,aAAA,CAAAO,KAAA,OAACL,CAAC,CAACM,QAAQ;EAAA,CAAC,GAAAR,aAAA,CAAAO,KAAA,OAACL,CAAC,CAACO,IAAI,GAAC;EAAC,OAAAT,aAAA,CAAAU,MAAA,CAAON,IAAI,GAACC,KAAK,GAAAL,aAAA,CAAAO,KAAA,OAACD,MAAM,CAACK,EAAE;EAACX,aAAA,CAAAU,MAAA,CAAAE,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "tagged-template-receiver",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return s.format`Hello ${s.name}!`;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => s.format`Hello ${_serviceFrame.track(() => s.name)}!`));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "format",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "tagged-template-receiver.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return s.format`Hello ${s.name}!`;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAAJ,aAAA,CAAAK,KAAA,OAAOH,CAAC,CAACI,MAAM,SAAAN,aAAA,CAAAK,KAAA,OAASH,CAAC,CAACK,IAAI,IAAG;EAACP,aAAA,CAAAI,MAAA,CAAAI,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "nested-synchronous-callback",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return s.items.filter(item=>item.active).map(item=><span key={item.id}>{item.name}</span>);}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => _serviceFrame.track(() => _serviceFrame.track(() => s.items).filter(item => _serviceFrame.track(() => item.active))).map(item => <span key={_serviceFrame.track(() => item.id)}>{_serviceFrame.track(() => item.name)}</span>)));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "items",
+          "filter",
+          "item",
+          "active",
+          "map",
+          "id",
+          "name",
+          "undefined"
+        ],
+        "sources": [
+          "nested-synchronous-callback.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return s.items.filter(item=>item.active).map(item=><span key={item.id}>{item.name}</span>);}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,OAAAA,aAAA,CAAAI,MAAA,CAAAJ,aAAA,CAAAK,KAAA,OAAOL,aAAA,CAAAK,KAAA,OAAAL,aAAA,CAAAK,KAAA,OAAAH,CAAC,CAACI,KAAK,EAACC,MAAM,CAACC,IAAI,IAAAR,aAAA,CAAAK,KAAA,OAAEG,IAAI,CAACC,MAAM,EAAC,EAACC,GAAG,CAACF,IAAI,IAAE,CAAC,IAAI,CAAC,GAAG,CAAC,CAAAR,aAAA,CAAAK,KAAA,OAACG,IAAI,CAACG,EAAE,EAAC,CAAC,CAAAX,aAAA,CAAAK,KAAA,OAACG,IAAI,CAACI,IAAI,EAAC,EAAE,IAAI,CAAC,CAAC;EAACZ,aAAA,CAAAI,MAAA,CAAAS,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "service-binding-reassignment",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){let s=useService(S);s=other;return s.count;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/service-binding-reassignment.tsx: Service bindings must not be reassigned.\n  1 | import { useService } from '@react-service/react';\n> 2 | function View(){let s=useService(S);s=other;return s.count;}\n    |                                     ^^^^^^^"
+    }
+  },
+  {
+    "name": "diagnostic-direct-hook-return",
+    "source": "import { useService } from '@react-service/react';\nconst View=()=>useService(S).count;",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-direct-hook-return.tsx: Assign useService to a local binding before reading properties, so hooks remain outside tracking callbacks.\n  1 | import { useService } from '@react-service/react';\n> 2 | const View=()=>useService(S).count;\n    |                ^^^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "diagnostic-service-escape",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return <Widget service={s}/>;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-service-escape.tsx: A service cannot escape to an external helper, JSX prop, or return value. Read its properties in the component, or call useService in the receiving component.\n  1 | import { useService } from '@react-service/react';\n> 2 | function View(){const s=useService(S);return <Widget service={s}/>;}\n    |                                                               ^"
+    }
+  },
+  {
+    "name": "diagnostic-render-prop",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);return <Widget>{()=>s.count}</Widget>;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-render-prop.tsx: Reactive render-prop callbacks cannot cross component props or JSX children. Call useService in the component that renders the value; on* command callbacks are supported.\n  1 | import { useService } from '@react-service/react';\n> 2 | function View(){const s=useService(S);return <Widget>{()=>s.count}</Widget>;}\n    |                                                       ^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "diagnostic-memo-concealed-read",
+    "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);const count=useMemo(()=>s.count,[s]);return count;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-memo-concealed-read.tsx: useMemo must not hide reactive service reads. Read the required primitive values before the hook and include them in its dependencies.\n  1 | import { useService } from '@react-service/react';\n  2 | import React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\n> 3 | function View(){const s=useService(S);const count=useMemo(()=>s.count,[s]);return count;}\n    |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "diagnostic-custom-hook",
+    "source": "import { useService } from '@react-service/react';\nfunction useCounter(){const s=useService(S);return s.count;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-custom-hook.tsx: useService is supported directly in function components, not custom hooks or anonymous callbacks.\n  1 | import { useService } from '@react-service/react';\n> 2 | function useCounter(){const s=useService(S);return s.count;}\n    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "diagnostic-async-component",
+    "source": "import { useService } from '@react-service/react';\nasync function View(){const s=useService(S);return s.count;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-async-component.tsx: Reactive service consumers must be synchronous function components.\n  1 | import { useService } from '@react-service/react';\n> 2 | async function View(){const s=useService(S);return s.count;}\n    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "diagnostic-generator",
+    "source": "import { useService } from '@react-service/react';\nfunction* View(){const s=useService(S);yield s.count;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-generator.tsx: Reactive service consumers must be synchronous function components.\n  1 | import { useService } from '@react-service/react';\n> 2 | function* View(){const s=useService(S);yield s.count;}\n    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "loop-closure-default",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);for(let {name=()=>name} of s.items){consume(name);}return s.count;}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  for (let _serviceItem of _serviceFrame.iterate(_serviceFrame.track(() => s.items))) {\n    let {\n      name\n    } = _serviceFrame.track(() => {\n      const {\n        name = () => name\n      } = _serviceItem;\n      return {\n        name\n      };\n    });\n    {\n      _serviceFrame.track(() => consume(name));\n    }\n  }\n  return _serviceFrame.finish(_serviceFrame.track(() => s.count));\n  _serviceFrame.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "_serviceFrame",
+          "useReactive_renderFrame",
+          "s",
+          "S",
+          "_serviceItem",
+          "iterate",
+          "track",
+          "items",
+          "name",
+          "consume",
+          "finish",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "loop-closure-default.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);for(let {name=()=>name} of s.items){consume(name);}return s.count;}"
+        ],
+        "mappings": ";AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,aAAA,GAAAC,uBAAA;EAAC,MAAMC,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAH,aAAA,CAAC;EAAC,SAAAI,YAAA,IAAAJ,aAAA,CAAAK,OAAA,CAAAL,aAAA,CAAAM,KAAA,OAA2BJ,CAAC,CAACK,KAAK;IAAA;MAAAC;IAAA,IAAAR,aAAA,CAAAM,KAAA;MAAA,MAA1B;QAACE,IAAI,GAACA,CAAA,KAAIA;MAAI,CAAC,GAAAJ,YAAA;MAAA;QAAAI;MAAA;IAAA;IAAY;MAACR,aAAA,CAAAM,KAAA,OAAAG,OAAO,CAACD,IAAI,CAAC;IAAC;EAAC;EAAA,OAAAR,aAAA,CAAAU,MAAA,CAAAV,aAAA,CAAAM,KAAA,OAAOJ,CAAC,CAACS,KAAK;EAACX,aAAA,CAAAU,MAAA,CAAAE,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "diagnostic-hook-default",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const s=useService(S);for(const {name=useState(0)} of s.items){consume(name);}return s.count;}",
+    "expected": {
+      "kind": "diagnostic",
+      "message": "/react-service/characterization/diagnostic-hook-default.tsx: Hooks cannot run inside loop destructuring. Evaluate hook results before the loop.\n  1 | import { useService } from '@react-service/react';\n> 2 | function View(){const s=useService(S);for(const {name=useState(0)} of s.items){consume(name);}return s.count;}\n    |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+    }
+  },
+  {
+    "name": "untouched-ordinary-component",
+    "source": "import { useService } from '@react-service/react';\nfunction View(){const data={count:1};return <div>{data.count}</div>}",
+    "expected": {
+      "kind": "output",
+      "code": "import { useService } from '@react-service/react';\nfunction View() {\n  const data = {\n    count: 1\n  };\n  return <div>{data.count}</div>;\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useService",
+          "View",
+          "data",
+          "count"
+        ],
+        "sources": [
+          "untouched-ordinary-component.tsx"
+        ],
+        "sourcesContent": [
+          "import { useService } from '@react-service/react';\nfunction View(){const data={count:1};return <div>{data.count}</div>}"
+        ],
+        "mappings": "AAAA,SAASA,UAAU,QAAQ,sBAAsB;AACjD,SAASC,IAAIA,CAAA,EAAE;EAAC,MAAMC,IAAI,GAAC;IAACC,KAAK,EAAC;EAAC,CAAC;EAAC,OAAO,CAAC,GAAG,CAAC,CAACD,IAAI,CAACC,KAAK,CAAC,EAAE,GAAG,CAAC;AAAA",
+        "ignoreList": []
+      }
+    }
+  },
+  {
+    "name": "directive-import-and-name-collision",
+    "source": "\"use client\";\nimport {useService} from \"@react-service/react\";\nconst _serviceFrame=1;function View(){const useReactive_renderFrame=2;const s=useService(S);return s.count+_serviceFrame+useReactive_renderFrame;}",
+    "expected": {
+      "kind": "output",
+      "code": "\"use client\";\n\nimport { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from \"@react-service/react\";\nconst _serviceFrame = 1;\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame2 = useReactive_renderFrame();\n  const useReactive_renderFrame = 2;\n  const s = useService(S, _serviceFrame2);\n  return _serviceFrame2.finish(_serviceFrame2.track(() => s.count) + _serviceFrame + useReactive_renderFrame);\n  _serviceFrame2.finish(undefined);\n}",
+      "map": {
+        "version": 3,
+        "names": [
+          "useRenderFrame",
+          "useReactive_renderFrame",
+          "useService",
+          "_serviceFrame",
+          "View",
+          "_serviceFrame2",
+          "s",
+          "S",
+          "finish",
+          "track",
+          "count",
+          "undefined"
+        ],
+        "sources": [
+          "directive-import-and-name-collision.tsx"
+        ],
+        "sourcesContent": [
+          "\"use client\";\nimport {useService} from \"@react-service/react\";\nconst _serviceFrame=1;function View(){const useReactive_renderFrame=2;const s=useService(S);return s.count+_serviceFrame+useReactive_renderFrame;}"
+        ],
+        "mappings": "AAAA,YAAY;;AAAC,SAAAA,cAAA,IAAAC,uBAAA;AACb,SAAQC,UAAU,QAAO,sBAAsB;AAC/C,MAAMC,aAAa,GAAC,CAAC;AAAC,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,cAAA,GAAAJ,uBAAA;EAAC,MAAMA,uBAAuB,GAAC,CAAC;EAAC,MAAMK,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAF,cAAA,CAAC;EAAC,OAAAA,cAAA,CAAAG,MAAA,CAAOH,cAAA,CAAAI,KAAA,OAAAH,CAAC,CAACI,KAAK,IAACP,aAAa,GAACF,uBAAuB;EAACI,cAAA,CAAAG,MAAA,CAAAG,SAAA;AAAA",
+        "ignoreList": []
+      }
+    }
+  }
+]

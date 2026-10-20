@@ -1,0 +1,6 @@
+{
+  "name":"@kinstate/example-vite", "private":true, "version":"0.1.0", "type":"module",
+  "scripts":{"dev":"vite --host 127.0.0.1", "build":"tsc --noEmit && vite build", "preview":"vite preview --host 127.0.0.1"},
+  "dependencies":{"@kinstate/core":"0.1.0","@kinstate/react":"0.1.0","react":"^19.3.1","react-dom":"^19.3.1"},
+  "devDependencies":{"@kinstate/compiler":"0.1.0"}
+}

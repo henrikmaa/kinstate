@@ -1,0 +1,631 @@
+{
+  "schemaVersion": 1,
+  "timestamp": "2026-10-20T19:45:57.865Z",
+  "environment": {
+    "frameworkVersion": "0.1.0",
+    "node": "v24.16.0",
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 7 3700X 8-Core Processor",
+    "logicalCpus": 16,
+    "memoryGiB": 31.3,
+    "browser": "156.0.8078.4",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+    "mode": "production",
+    "renderer": "React DOM in headless Chromium",
+    "viewport": "1280 × 800",
+    "versions": {
+      "react": "19.3.1",
+      "react-dom": "19.3.1",
+      "mobx": "6.16.1",
+      "mobx-react-lite": "4.1.1",
+      "zustand": "5.0.15",
+      "valtio": "2.3.2",
+      "vite": "7.3.7"
+    }
+  },
+  "methodology": {
+    "samples": 5,
+    "warmups": 2,
+    "seed": 20261020,
+    "scheduling": "Controlled commit benchmark: one synchronous logical transaction, one microtask checkpoint, then the same React flushSync checkpoint for every library; timing includes notification delivery and DOM commits, excludes correctness checks. No frame or paint wait.",
+    "limitations": [
+      "Single machine, single browser process, sequential warmed runs; timings are not cross-device performance guarantees.",
+      "Headless browser commit latency excludes paint, layout measurement, network, real API libraries and user-event dispatch.",
+      "Large arrays use a bounded visible window; this is not a virtualization-library benchmark.",
+      "Zustand uses one structurally shared immutable publication per transaction; proxy libraries mutate in place. Representation costs are included.",
+      "Results are scenario-specific. Do not combine different workloads into an overall winner.",
+      "Fresh stores and roots for every sample; setup and teardown are measured separately. No forced garbage collection; allocation and GC can affect outliers."
+    ]
+  },
+  "results": [
+    {
+      "workload": "map-and-replace",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 100,
+      "library": "react-service",
+      "samples": [
+        {
+          "setupMs": 16.5,
+          "mountMs": 2.199999999254942,
+          "updateMs": 1532.800000000745,
+          "unmountMs": 0.3999999985098839,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 7.400000002235174,
+          "mountMs": 1.1000000014901161,
+          "updateMs": 5394,
+          "unmountMs": 0.3999999985098839,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 19,
+          "mountMs": 1.2999999970197678,
+          "updateMs": 1647,
+          "unmountMs": 0.3999999985098839,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 26.899999998509884,
+          "mountMs": 1.5,
+          "updateMs": 1855.300000000745,
+          "unmountMs": 0.5,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 22.5,
+          "mountMs": 1.4000000022351742,
+          "updateMs": 1657.300000000745,
+          "unmountMs": 0.19999999925494194,
+          "renders": 1000,
+          "checksum": 769394031
+        }
+      ]
+    },
+    {
+      "workload": "map-and-replace",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 100,
+      "library": "mobx",
+      "samples": [
+        {
+          "setupMs": 2623.800000000745,
+          "mountMs": 0.8000000007450581,
+          "updateMs": 2518.699999999255,
+          "unmountMs": 0.3999999985098839,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 397.80000000074506,
+          "mountMs": 0.6999999992549419,
+          "updateMs": 2814.699999999255,
+          "unmountMs": 0.30000000074505806,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 360.19999999925494,
+          "mountMs": 0.6999999992549419,
+          "updateMs": 4197,
+          "unmountMs": 0.19999999925494194,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 1758.8999999985099,
+          "mountMs": 0.6999999992549419,
+          "updateMs": 2594.900000002235,
+          "unmountMs": 0.3999999985098839,
+          "renders": 1000,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 373.30000000074506,
+          "mountMs": 0.6999999992549419,
+          "updateMs": 4883,
+          "unmountMs": 0.30000000074505806,
+          "renders": 1000,
+          "checksum": 769394031
+        }
+      ]
+    },
+    {
+      "workload": "map-and-replace",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 100,
+      "library": "zustand",
+      "samples": [
+        {
+          "setupMs": 5.699999999254942,
+          "mountMs": 0.3999999985098839,
+          "updateMs": 9.400000002235174,
+          "unmountMs": 0.30000000074505806,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 5.900000002235174,
+          "mountMs": 0.3999999985098839,
+          "updateMs": 15.800000000745058,
+          "unmountMs": 0.19999999925494194,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 5,
+          "mountMs": 0.3999999985098839,
+          "updateMs": 8.800000000745058,
+          "unmountMs": 0.09999999776482582,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 5.600000001490116,
+          "mountMs": 0.5999999977648258,
+          "updateMs": 9,
+          "unmountMs": 0.19999999925494194,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 5.5,
+          "mountMs": 0.3999999985098839,
+          "updateMs": 9.100000001490116,
+          "unmountMs": 0.19999999925494194,
+          "renders": 10,
+          "checksum": 769394031
+        }
+      ]
+    },
+    {
+      "workload": "map-and-replace",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 100,
+      "library": "valtio",
+      "samples": [
+        {
+          "setupMs": 354.29999999701977,
+          "mountMs": 252.69999999925494,
+          "updateMs": 4234.800000000745,
+          "unmountMs": 12.300000000745058,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 362.5,
+          "mountMs": 268.19999999925494,
+          "updateMs": 4643.900000002235,
+          "unmountMs": 10.400000002235174,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 334.70000000298023,
+          "mountMs": 263.69999999925494,
+          "updateMs": 5535.400000002235,
+          "unmountMs": 9.5,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 349.80000000074506,
+          "mountMs": 268.5,
+          "updateMs": 4252.39999999851,
+          "unmountMs": 10.399999998509884,
+          "renders": 10,
+          "checksum": 769394031
+        },
+        {
+          "setupMs": 2969.89999999851,
+          "mountMs": 262.70000000298023,
+          "updateMs": 4987.599999997765,
+          "unmountMs": 11.199999999254942,
+          "renders": 10,
+          "checksum": 769394031
+        }
+      ]
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "react-service",
+      "samples": [
+        {
+          "setupMs": 14.800000000745058,
+          "mountMs": 275.30000000074506,
+          "updateMs": 879.6000000014901,
+          "unmountMs": 8.100000001490116,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 13.900000002235174,
+          "mountMs": 259.9000000022352,
+          "updateMs": 871.2999999970198,
+          "unmountMs": 6.300000000745058,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 5.699999999254942,
+          "mountMs": 288.5,
+          "updateMs": 903.1000000014901,
+          "unmountMs": 8.599999997764826,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 17.300000000745058,
+          "mountMs": 519.7000000029802,
+          "updateMs": 804.1999999992549,
+          "unmountMs": 8.100000001490116,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 13.400000002235174,
+          "mountMs": 258.1000000014901,
+          "updateMs": 818.3999999985099,
+          "unmountMs": 7.599999997764826,
+          "renders": 10,
+          "checksum": 1686933603
+        }
+      ]
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "mobx",
+      "samples": [
+        {
+          "setupMs": 332.30000000074506,
+          "mountMs": 59.69999999925494,
+          "updateMs": 568.8999999985099,
+          "unmountMs": 19.899999998509884,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 799.0999999977648,
+          "mountMs": 53.600000001490116,
+          "updateMs": 462,
+          "unmountMs": 17.300000000745058,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 363.69999999925494,
+          "mountMs": 65.5,
+          "updateMs": 496.30000000074506,
+          "unmountMs": 21.899999998509884,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 404.30000000074506,
+          "mountMs": 56.30000000074506,
+          "updateMs": 489.80000000074506,
+          "unmountMs": 19.100000001490116,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 773.8999999985099,
+          "mountMs": 52.5,
+          "updateMs": 439,
+          "unmountMs": 18.800000000745058,
+          "renders": 10,
+          "checksum": 1686933603
+        }
+      ]
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "zustand",
+      "samples": [
+        {
+          "setupMs": 4.899999998509884,
+          "mountMs": 4.399999998509884,
+          "updateMs": 44,
+          "unmountMs": 0.09999999776482582,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 5.299999997019768,
+          "mountMs": 4.800000000745058,
+          "updateMs": 48.19999999925494,
+          "unmountMs": 0.20000000298023224,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 5.5,
+          "mountMs": 4.699999999254942,
+          "updateMs": 48.30000000074506,
+          "unmountMs": 0,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 5.699999999254942,
+          "mountMs": 4.699999999254942,
+          "updateMs": 47.399999998509884,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 5.400000002235174,
+          "mountMs": 4.399999998509884,
+          "updateMs": 44,
+          "unmountMs": 0.09999999776482582,
+          "renders": 10,
+          "checksum": 1686933603
+        }
+      ]
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "valtio",
+      "samples": [
+        {
+          "setupMs": 492.19999999925494,
+          "mountMs": 452.3999999985099,
+          "updateMs": 2064.800000000745,
+          "unmountMs": 14.399999998509884,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 328.69999999925494,
+          "mountMs": 432.0999999977648,
+          "updateMs": 2063.60000000149,
+          "unmountMs": 14,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 830.9000000022352,
+          "mountMs": 420.1000000014901,
+          "updateMs": 1970.800000000745,
+          "unmountMs": 17.099999997764826,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 333.19999999925494,
+          "mountMs": 421.69999999925494,
+          "updateMs": 1973.300000000745,
+          "unmountMs": 10.5,
+          "renders": 10,
+          "checksum": 1686933603
+        },
+        {
+          "setupMs": 367.3999999985099,
+          "mountMs": 434.70000000298023,
+          "updateMs": 1960.699999999255,
+          "unmountMs": 12.899999998509884,
+          "renders": 10,
+          "checksum": 1686933603
+        }
+      ]
+    },
+    {
+      "workload": "immutable-input-filter",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "react-service",
+      "samples": [
+        {
+          "setupMs": 6.699999999254942,
+          "mountMs": 5.600000001490116,
+          "updateMs": 77.89999999850988,
+          "unmountMs": 0.09999999776482582,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 15.699999999254942,
+          "mountMs": 4.899999998509884,
+          "updateMs": 79.30000000074506,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 6.5,
+          "mountMs": 5,
+          "updateMs": 76.10000000149012,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 16.299999997019768,
+          "mountMs": 4.900000002235174,
+          "updateMs": 76.80000000074506,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 6.400000002235174,
+          "mountMs": 4.800000000745058,
+          "updateMs": 65.79999999701977,
+          "unmountMs": 0.30000000074505806,
+          "renders": 10,
+          "checksum": 1357725684
+        }
+      ]
+    },
+    {
+      "workload": "immutable-input-filter",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "mobx",
+      "samples": [
+        {
+          "setupMs": 232.10000000149012,
+          "mountMs": 4.899999998509884,
+          "updateMs": 68.5,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 218.30000000074506,
+          "mountMs": 4.899999998509884,
+          "updateMs": 74.19999999925494,
+          "unmountMs": 0.19999999925494194,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 215.60000000149012,
+          "mountMs": 4.900000002235174,
+          "updateMs": 68.59999999776483,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 1084.6000000014901,
+          "mountMs": 6.600000001490116,
+          "updateMs": 85.89999999850988,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 212.80000000074506,
+          "mountMs": 4.800000000745058,
+          "updateMs": 71.30000000074506,
+          "unmountMs": 0.20000000298023224,
+          "renders": 10,
+          "checksum": 1357725684
+        }
+      ]
+    },
+    {
+      "workload": "immutable-input-filter",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "zustand",
+      "samples": [
+        {
+          "setupMs": 5.400000002235174,
+          "mountMs": 4.5,
+          "updateMs": 79.10000000149012,
+          "unmountMs": 0.09999999776482582,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 6.300000000745058,
+          "mountMs": 4.900000002235174,
+          "updateMs": 81.5,
+          "unmountMs": 0.09999999776482582,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 6.300000000745058,
+          "mountMs": 4.699999999254942,
+          "updateMs": 69.20000000298023,
+          "unmountMs": 0.19999999925494194,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 6.900000002235174,
+          "mountMs": 4.800000000745058,
+          "updateMs": 67.80000000074506,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 269,
+          "mountMs": 5.599999997764826,
+          "updateMs": 88.19999999925494,
+          "unmountMs": 0.10000000149011612,
+          "renders": 10,
+          "checksum": 1357725684
+        }
+      ]
+    },
+    {
+      "workload": "immutable-input-filter",
+      "size": 50000,
+      "operations": 10,
+      "consumers": 1,
+      "library": "valtio",
+      "samples": [
+        {
+          "setupMs": 166.70000000298023,
+          "mountMs": 118.5,
+          "updateMs": 145.80000000074506,
+          "unmountMs": 9.599999997764826,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 195.5,
+          "mountMs": 155.5,
+          "updateMs": 132.80000000074506,
+          "unmountMs": 6.899999998509884,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 181.10000000149012,
+          "mountMs": 109.59999999776483,
+          "updateMs": 134,
+          "unmountMs": 5.100000001490116,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 175.5,
+          "mountMs": 112.80000000074506,
+          "updateMs": 131.5,
+          "unmountMs": 5.100000001490116,
+          "renders": 10,
+          "checksum": 1357725684
+        },
+        {
+          "setupMs": 192,
+          "mountMs": 121.5,
+          "updateMs": 134.60000000149012,
+          "unmountMs": 6.199999999254942,
+          "renders": 10,
+          "checksum": 1357725684
+        }
+      ]
+    }
+  ]
+}

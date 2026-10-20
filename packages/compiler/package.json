@@ -1,0 +1,48 @@
+{
+  "name": "@kinstate/compiler",
+  "version": "0.1.0",
+  "description": "Kinstate compiler for automatic React render dependency tracking",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./vite": {
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.js",
+      "default": "./dist/vite.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run test",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/types": "^7.26.0",
+    "@types/babel__core": "^7.20.5"
+  },
+  "peerDependencies": {
+    "vite": ">=5 <9"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+}
