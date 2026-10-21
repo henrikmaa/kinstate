@@ -1,5 +1,7 @@
 # Understand performance
 
+The recorded comparative timings predate readonly React consumer views. They are historical measurements; a fresh timing run is required for current speed comparisons. Correctness smoke checks are rerun separately.
+
 Kinstate's primary performance property is subscription precision. A component reading `loading` does not subscribe to `notifications` merely because both fields belong to one service. Nested objects, computed getters and conditional reads preserve that distinction.
 
 That does not make every state operation cheap. Measure mutation work, dependency validation, React work and data allocation separately when choosing a representation.

@@ -84,7 +84,7 @@ describe('Phase 1: authored useService API', () => {
   });
 });
 
-it('returns the same canonical instance across hooks and rerenders', async () => {
+it('returns the same consumer view across hooks and rerenders', async () => {
   const scope = new ServiceScope([Counter]);
   const counter = scope.get(Counter);
   function Display() {

@@ -84,6 +84,6 @@ export default function App() {
 }
 ```
 
-Call `useService` directly in a synchronous component and keep its result in a local binding. Each component can resolve the same service independently. No wrapper or manual subscription is required.
+Call `useService` directly in a synchronous component and keep its result in a local binding. Each component can resolve the same service independently. The returned view has deeply read-only data; use service methods to change it, including in event handlers. No wrapper or manual subscription is required.
 
 If the hook reports that the compiler is missing, check which source files your bundler and test runner process. If it reports a missing provider, move the provider above that consumer. The framework intentionally supplies neither an untracked fallback nor a global service instance.

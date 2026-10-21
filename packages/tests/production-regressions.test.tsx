@@ -11,6 +11,12 @@ class State extends Service {
   rows = [{ name: 'First' }];
   unrelated = 0;
   node: HTMLInputElement | null = null;
+  rename(name: string) {
+    this.name = name;
+  }
+  attach(node: HTMLInputElement | null) {
+    this.node = node;
+  }
   load() {
     this.count++;
   }
@@ -47,7 +53,7 @@ describe('production compiler/runtime regressions', () => {
     function Editor() {
       const service = useService(State);
       const increment = useCallback(() => {
-        service.count++;
+        service.load();
       }, [service]);
       useEffect(() => {
         service.load();
@@ -58,7 +64,7 @@ describe('production compiler/runtime regressions', () => {
           <Input
             value={service.name}
             onChange={(event) => {
-              service.name = event.target.value;
+              service.rename(event.target.value);
             }}
           />
           <Button onClick={increment}>
@@ -108,7 +114,7 @@ describe('production compiler/runtime regressions', () => {
               key={row.name}
               value={row.name}
               ref={(node) => {
-                service.node = node;
+                service.attach(node);
               }}
             />
           ))}
@@ -220,7 +226,7 @@ describe('production compiler/runtime regressions', () => {
   it('accepts evaluated plain list data but rejects live objects through UI props', async () => {
     const scope = new ServiceScope([State]);
     const state = scope.get(State);
-    function List({ items }: { items: string[] }) {
+    function List({ items }: { items: readonly unknown[] }) {
       return <div>{items.join(',')}</div>;
     }
     function Display() {
@@ -240,7 +246,7 @@ describe('production compiler/runtime regressions', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     function Unsafe() {
       const service = useService(State);
-      return <List items={service.rows as unknown as string[]} />;
+      return <List items={service.rows} />;
     }
     class Boundary extends React.Component<{ children: React.ReactNode }, { error: boolean }> {
       state = { error: false };

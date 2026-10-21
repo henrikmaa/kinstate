@@ -30,7 +30,7 @@ Declare constructor dependencies using `static inject = dependencies(CartService
 
 `collectDependencies(read, destination?)` is a low-level synchronous observation API. Its returned map contains only that call's reads. An optional caller-owned destination accumulates earliest observed versions even if `read` throws; allocate a separate destination for each observation attempt. Nested collectors restore their parent after success or failure.
 
-Service-owned plain objects and arrays are reactive. Native objects/custom nested instances are opaque. Raw references bypass tracking. JavaScript private slots are unobservable. Do not derive cached getters from private-slot-only state. `isReactive(value)` identifies canonical proxies without wrapping its argument.
+Service-owned plain objects and arrays are reactive. Native objects/custom nested instances are opaque. Raw references bypass tracking. JavaScript private slots are unobservable. Do not derive cached getters from private-slot-only state. `isReactive(value)` identifies canonical proxies and their registered readonly React views without wrapping its argument.
 
 ESM, Node.js 22.12+, MIT. React integration requires the separate React and compiler packages.
 

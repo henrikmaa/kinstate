@@ -24,6 +24,20 @@ export function markMutation(): void {
   mutationEpoch++;
 }
 
+/** Private synchronous escape for reflection that must not become an observation. */
+export function untracked<T>(fn: () => T): T {
+  const previous = collector;
+  const previousId = activeCollectionId;
+  collector = undefined;
+  activeCollectionId = 0;
+  try {
+    return fn();
+  } finally {
+    collector = previous;
+    activeCollectionId = previousId;
+  }
+}
+
 /**
  * Collect only synchronous reads. Nested collectors restore their parent.
  * An optional caller-owned map accumulates earliest versions, including reads

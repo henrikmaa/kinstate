@@ -80,6 +80,9 @@ class State extends Service {
   row = { name: 'Ada', ignored: 0 };
   count = 0;
   unrelated = 0;
+  rename(name: string) {
+    this.row.name = name;
+  }
 }
 const header = `import React, {memo, forwardRef, useState} from 'react';import {useService} from '@kinstate/react';import {State} from './State';`;
 afterEach(cleanup);
@@ -152,7 +155,7 @@ describe('compiled reactive props in production composition', () => {
 
   it('tracks nested destructuring after the frame hook, preserving memo/forwardRef refs and commands', async () => {
     const views = compile(
-      `${header}const Child=memo(forwardRef(({row:{name},onChange},ref)=><button ref={ref} onClick={onChange}>{name}</button>));function Parent(){const state=useService(State);return <Child row={state.row} onChange={()=>{state.row.name='Grace'}}/>}`,
+      `${header}const Child=memo(forwardRef(({row:{name},onChange},ref)=><button ref={ref} onClick={onChange}>{name}</button>));function Parent(){const state=useService(State);return <Child row={state.row} onChange={()=>state.rename('Grace')}/>}`,
     );
     const scope = new ServiceScope([State]);
     render(

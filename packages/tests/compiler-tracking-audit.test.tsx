@@ -77,7 +77,9 @@ it('tracks computed method keys named like hooks and alternating TypeScript memb
     return (
       <span data-testid="wrapped">
         {(
-          service.nested as { count: number; useCount(): number } satisfies { count: number }
+          service.nested as { readonly count: number; useCount(): number } satisfies {
+            readonly count: number;
+          }
         ).useCount()}
       </span>
     );

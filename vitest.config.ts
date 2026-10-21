@@ -5,6 +5,7 @@ const path = (relative: string) => fileURLToPath(new URL(relative, import.meta.u
 export default defineConfig({
   plugins: [kinstate()],
   resolve: { alias: [
+    { find: '@kinstate/core/internal', replacement: path('./packages/core/src/internal.ts') },
     { find: '@kinstate/react/internal', replacement: path('./packages/react/src/internal.ts') },
     { find: '@kinstate/react', replacement: path('./packages/react/src/index.tsx') },
     { find: '@kinstate/core', replacement: path('./packages/core/src/index.ts') },

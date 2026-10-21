@@ -34,7 +34,7 @@ export function UserRow({ user }: { user: { name: string } }) {
 }
 ```
 
-The child receives the original canonical object. Its own frame subscribes to `name`; the parent does not subscribe to that property merely by passing the object. Replacing `selectedUser` updates the parent and passes the replacement. Ordinary React parent renders still render an unmemoized child, as usual.
+The child receives the same cached readonly consumer view. Its own frame subscribes to `name`; the parent does not subscribe to that property merely by passing the object. Replacing `selectedUser` updates the parent and passes the replacement. Ordinary React parent renders still render an unmemoized child, as usual.
 
 Synchronous render callbacks work through the same receiving boundary:
 

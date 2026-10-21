@@ -37,7 +37,7 @@ function Name() {
       </p>
       <button
         onClick={() => {
-          service.name = 'Renamed';
+          service.rename();
         }}
       >
         Rename

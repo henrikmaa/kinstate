@@ -69,7 +69,7 @@ function Composition() {
       </p>
       <button
         onClick={() => {
-          service.items[0]!.label += '!';
+          service.editFirstItem();
         }}
       >
         Edit first item

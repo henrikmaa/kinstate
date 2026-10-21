@@ -44,7 +44,7 @@ export function SelectedUser() {
 }
 ```
 
-`UserRow` receives the canonical object and subscribes to `name`. Merely passing that object does not subscribe its parent to the nested name. Replacing `selectedUser` updates the parent so it can pass the replacement.
+`UserRow` receives the stable read-only object view and subscribes to `name`. Merely passing that object does not subscribe its parent to the nested name. Replacing `selectedUser` updates the parent so it can pass the replacement.
 
 Compiled receiving components also support synchronous render callbacks:
 

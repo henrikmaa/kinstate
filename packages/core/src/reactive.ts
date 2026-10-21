@@ -1,6 +1,7 @@
 import { Atom, Computed, isCollecting, markMutation } from './dependencies.js';
 import { batch } from './scheduler.js';
-import { createArrayIteration, isArrayIndex } from './array-iteration.js';
+import { unwrapReadonlyView } from './readonly-views.js';
+import { arrayIterationNative, createArrayIteration, isArrayIndex } from './array-iteration.js';
 
 /** Own canonical proxy identity and observable metadata for the lifetime of each target. */
 class Metadata {
@@ -51,6 +52,11 @@ class Metadata {
 const handlers = new WeakMap<object, ReactiveHandler>();
 const metadata = new WeakMap<object, Metadata>();
 const serviceTargets = new WeakSet<object>();
+const serviceMethods = new WeakSet<Function>();
+/** Private consumer-view protocol: only Service-bound commands have mutable authority. */
+export function isServiceMethod(value: unknown): boolean {
+  return typeof value === 'function' && serviceMethods.has(value);
+}
 
 interface AtomEntry {
   reference: WeakRef<Atom>;
@@ -125,7 +131,10 @@ function descriptor(target: object | null, key: PropertyKey): PropertyDescriptor
   }
 }
 function unwrap<T>(value: T): T {
-  return value && typeof value === 'object' ? ((handlers.get(value)?.target ?? value) as T) : value;
+  const source = unwrapReadonlyView(value);
+  return source && typeof source === 'object'
+    ? ((handlers.get(source)?.target ?? source) as T)
+    : source;
 }
 function changeValue(state: Metadata | undefined, key: PropertyKey): void {
   if (state) {
@@ -147,6 +156,7 @@ function wrap<T>(value: T): T {
   return wrapObject(value);
 }
 function wrapObject<T extends object>(value: T): T {
+  value = unwrapReadonlyView(value);
   const existing = handlers.get(value);
   if (existing) return existing.proxy as T;
   const prototype = Object.getPrototypeOf(value);
@@ -168,9 +178,10 @@ export function createReactiveService<T extends object>(target: T): T {
   return wrap(target);
 }
 
-/** Whether a value is a canonical service or nested reactive proxy from this runtime. */
+/** Whether a value is a reactive proxy or its registered readonly consumer view. */
 export function isReactive(value: unknown): boolean {
-  return value !== null && typeof value === 'object' && handlers.get(value)?.proxy === value;
+  const source = unwrapReadonlyView(value);
+  return source !== null && typeof source === 'object' && handlers.get(source)?.proxy === source;
 }
 
 /** Apply prevalidated fields, preserving callbacks without changing ordinary method binding. */
@@ -216,6 +227,16 @@ class ReactiveHandler implements ProxyHandler<object> {
   private getState(target: object): Metadata {
     return (this.state ??= meta(target));
   }
+  readArrayIndex(index: string): unknown {
+    if (this.dataProperties.has(index)) return wrap(Reflect.get(this.target, index, this.proxy));
+    const entry = Object.getOwnPropertyDescriptor(this.target, index);
+    if (entry && 'value' in entry) {
+      if (!entry.configurable && !entry.writable) return entry.value;
+      if (entry.configurable && entry.writable) this.dataProperties.add(index);
+      return wrap(entry.value);
+    }
+    return Reflect.get(this.proxy, index);
+  }
   get(target: object, key: PropertyKey, receiver: any): unknown {
     const { dataProperties, isService, isArray } = this;
     const cachedData = dataProperties.has(key);
@@ -256,16 +277,7 @@ class ReactiveHandler implements ProxyHandler<object> {
           target as unknown[],
           receiver,
           result,
-          (index) => {
-            if (dataProperties.has(index)) return wrap(Reflect.get(target, index, receiver));
-            const entry = Object.getOwnPropertyDescriptor(target, index);
-            if (entry && 'value' in entry) {
-              if (!entry.configurable && !entry.writable) return entry.value;
-              if (entry.configurable && entry.writable) dataProperties.add(index);
-              return wrap(entry.value);
-            }
-            return Reflect.get(receiver, index);
-          },
+          (index) => this.readArrayIndex(index),
           () => {
             if (isCollecting()) state.readSequence();
           },
@@ -280,6 +292,7 @@ class ReactiveHandler implements ProxyHandler<object> {
       let bound = state.methods.get(result);
       if (!bound) {
         bound = (...args: unknown[]) => batch(() => Reflect.apply(result, this.proxy, args));
+        serviceMethods.add(bound);
         state.methods.set(result, bound);
       }
       return bound;
@@ -393,4 +406,37 @@ class ReactiveHandler implements ProxyHandler<object> {
     if (isCollecting()) this.getState(target).keys.read();
     return Reflect.ownKeys(target);
   }
+}
+
+const readonlyIterations = new WeakMap<object, WeakMap<Function, Function>>();
+/** Preserve sequence subscriptions without exposing mutable callback values or arrays. */
+export function createReadonlyArrayIteration(
+  source: object,
+  receiver: object,
+  method: unknown,
+  readonlyValue: (value: unknown) => unknown,
+): Function | undefined {
+  const canonical = unwrapReadonlyView(source);
+  const handler = handlers.get(canonical);
+  if (!handler || handler.proxy !== canonical || !Array.isArray(handler.target)) return;
+  const native = arrayIterationNative(method);
+  if (!native || typeof method !== 'function') return;
+  let methods = readonlyIterations.get(receiver);
+  const existing = methods?.get(method);
+  if (existing) return existing;
+  const state = meta(handler.target);
+  const iteration = createArrayIteration(
+    handler.target as unknown[],
+    receiver,
+    native,
+    (key) => readonlyValue(handler.readArrayIndex(key)),
+    () => {
+      if (isCollecting()) state.readSequence();
+    },
+  );
+  if (iteration) {
+    if (!methods) readonlyIterations.set(receiver, (methods = new WeakMap()));
+    methods.set(method, iteration);
+  }
+  return iteration;
 }

@@ -14,6 +14,10 @@ class CatalogService extends Service {
   loading = false;
   search = '';
 
+  setSearch(value: string) {
+    this.search = value;
+  }
+
   get matchingNames() {
     const query = this.search.toLowerCase();
     return this.products
@@ -30,7 +34,7 @@ function Catalog() {
         aria-label="Filter"
         value={catalog.search}
         onChange={(event) => {
-          catalog.search = event.target.value;
+          catalog.setSearch(event.target.value);
         }}
       />
       {catalog.loading ? <p>Loading…</p> : <p>{catalog.matchingNames.join(', ')}</p>}
@@ -64,7 +68,7 @@ The source can instead be `query.data`, a context value, or a selector result fr
 
 ## Ownership and identity
 
-Ordinary external object inputs are borrowed immutable references. Their exact identity is preserved, and replacing the bound field is observable. Kinstate does not deeply proxy or clone a query payload. An in-place edit such as changing `products[0].name` at the source is not a notification: publish a replacement according to the source library's contract.
+Inside a service, ordinary external object inputs are borrowed immutable references with their original identity preserved. Replacing the bound field is observable. React consumers receive cached read-only views of those objects, so their identity differs from the original source reference. Kinstate does not clone a query payload or make its borrowed contents deeply observable; the readonly consumer boundary wraps accessed values lazily. An in-place edit such as changing `products[0].name` at the source is not a notification: publish a replacement according to the source library's contract.
 
 Service-owned `search` remains independent when products change. For edits to source data, use a separate [draft](forms-and-drafts.md) and an owner-provided [command callback](callbacks.md). Assigning a bound property does not update its original store; a later committed binding can reassert the owner's value.
 

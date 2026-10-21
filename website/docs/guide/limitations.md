@@ -2,6 +2,10 @@
 
 Kinstate provides an ordinary class API within explicit JavaScript, compiler and React boundaries. Review these before designing a feature around unusual object types or cross-library synchronization.
 
+## Read-only React consumers
+
+`useService` returns a read-only service view. Change state through service commands, including in event handlers. Fields, getters and nested data have deeply read-only types. Method signatures preserve generic and overloaded inference, so method return types can appear mutable; returned objects are still protected at runtime. Callback and promise wrappers have stable identities distinct from the original functions and promises. Opaque nested instance methods are blocked through views; expose a service command for those operations.
+
 ## Classes and owned data
 
 Service-owned plain objects and arrays are deeply reactive. `Map`, `Set`, `Date`, promises, typed arrays, DOM objects, frozen/non-extensible objects and custom nested class instances are opaque. Replace their containing property when a change must be observed.

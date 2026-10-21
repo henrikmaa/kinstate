@@ -31,6 +31,8 @@ function App() {
 }
 ```
 
+`useService()` returns a stable **read-only consumer view**. Fields, getter results and nested arrays cannot be assigned from a component, including event handlers. Use commands such as `service.rename(name)`; those methods keep writable `this` and support async work. Runtime guards also protect returned objects and promise resolutions. Views differ from the mutable instances returned by `scope.get()` outside React. See [consumer ownership](docs/LIMITATIONS.md#read-only-react-consumers).
+
 Changing `name` does not schedule `Counter`. Primitive fields, nested plain objects, arrays, computed getters, and changing conditional dependencies are supported. Mutations use `Object.is` equality, and methods retain stable bound references. No service-class React imports, component wrappers, selectors, or per-field declarations are required.
 
 ## Build and run
@@ -116,7 +118,7 @@ Consumers still call `useService(UserService)`. Changes to supplied fields updat
 
 New provider scopes receive initial inputs before consumers render and before `onInit`. Later snapshots publish during the layout commit, never from a pending or abandoned render. Omitted fields keep their latest value; explicitly supply `undefined` to clear a field that allows it. Inputs take precedence over `initialState` for overlapping fields. Registration tokens stay fixed until remount, while supplied values and keys may change. Let the source hook own data Suspense before producing bindings; consumers must not suspend waiting for input changes that require the same pending provider commit.
 
-Callback inputs use the same binding. Pass a function returned by another hook as `onSave`; a service method can call `this.onSave(...)` without importing React. The supplied function is not executed during binding or wrapped/rebound by the framework. Its identity, return value, promise, and thrown/rejected errors are preserved. After a committed callback change, service methods read the new function and its closure. Omission keeps the previous callback; explicit `undefined` clears optional callbacks.
+Callback inputs use the same binding. Pass a function returned by another hook as `onSave`; a service method can call `this.onSave(...)` without importing React. Binding does not execute the supplied function. Inside core services its identity, return value, promise and errors are preserved. React views expose stable callable wrappers so returned state remains protected; those wrappers and their returned promises differ from the original callback/promise. After a committed callback change, service methods read the new function and its closure. Omission keeps the previous callback; explicit `undefined` clears optional callbacks.
 
 A previously detached callback remains a snapshot of that function. A stable bound service method that reads `this.onSave` uses the latest committed input. `useCallback` is optional, useful only when the source needs stable callback identity. Use ordinary callback fields initialized to `undefined` or a default function; prototype methods and lifecycle hooks cannot be replaced. A stable callback reading hidden external mutable state does not invalidate computed getters—pass that state as another input if computations depend on it.
 

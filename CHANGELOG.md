@@ -2,6 +2,9 @@
 
 ## 0.1.0
 
+- Made React service consumers readonly: getter/nested state and arrays require service commands for mutation, with runtime protection for reflection, callbacks and async method results. Consumer views are stable and distinct from mutable core instances; command argument normalization and optimized array tracking preserve core ownership.
+- Added SWC-preserving Next.js Webpack/Turbopack integration, fixed method-alias tracking and computed parameter-key scope, and stopped normalized input refresh loops.
+
 - Added dark-only Rspress documentation with scenario guides, API references, local search, a live compiled service demo, the kingfisher mascot, production browser checks and GitHub Pages deployment.
 - Named the framework Kinstate: “Ordinary classes. Reactive state.” Packages use the `@kinstate` scope, including compiler defaults, examples and installation instructions. Historical measurement data and compiler characterization fixtures retain their original identifiers.
 - Reduced collection bookkeeping allocations with reusable computed edges, shared proxy-handler methods and a canonical weak registry; preserved per-render capture and computed read consistency.

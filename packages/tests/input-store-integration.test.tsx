@@ -24,6 +24,9 @@ it('reconciles real external-store publications and React callback state before 
     get caption() {
       return this.format?.(this.product.name) ?? this.product.name;
     }
+    edit(value: string) {
+      this.draft = value;
+    }
     save() {
       this.publish?.(this.draft);
     }
@@ -42,7 +45,7 @@ it('reconciles real external-store publications and React callback state before 
           aria-label="Draft"
           value={service.draft}
           onChange={(event) => {
-            service.draft = event.target.value;
+            service.edit(event.target.value);
           }}
         />
         <button onClick={() => service.save()}>Save draft</button>

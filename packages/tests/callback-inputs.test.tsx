@@ -97,6 +97,7 @@ it('notifies direct callback consumers only for identity changes and keeps unrel
   const renders = { callback: 0, draft: 0 };
   const first = async (name: string) => name;
   const second = async (name: string) => name;
+  const observedCallbacks: Array<Editor['onSave']> = [];
   function CallbackDisplay() {
     const editor = useService(Editor);
     renders.callback++;
@@ -114,7 +115,8 @@ it('notifies direct callback consumers only for identity changes and keeps unrel
   function CallbackIdentity() {
     const editor = useService(Editor);
     renders.callback++;
-    return <span>{editor.onSave === first ? 'first' : 'second'}</span>;
+    observedCallbacks.push(editor.onSave);
+    return <span>{editor.onSave ? 'available' : 'missing'}</span>;
   }
   function DraftDisplay() {
     const editor = useService(Editor);
@@ -134,18 +136,23 @@ it('notifies direct callback consumers only for identity changes and keeps unrel
     </ServiceProvider>,
   );
   const baseline = { ...renders };
+  const initialCallback = observedCallbacks[0];
+  expect(initialCallback).toBeTypeOf('function');
   view.rerender(
     <ServiceProvider services={[serviceInputs(Editor, { onSave: first })]}>
       {children}
     </ServiceProvider>,
   );
   expect(renders).toEqual(baseline);
+  expect(observedCallbacks).toEqual([initialCallback]);
   view.rerender(
     <ServiceProvider services={[serviceInputs(Editor, { onSave: second })]}>
       {children}
     </ServiceProvider>,
   );
-  expect(screen.getByText('second')).toBeTruthy();
+  expect(screen.getByText('available')).toBeTruthy();
+  expect(observedCallbacks).toHaveLength(2);
+  expect(observedCallbacks[1]).not.toBe(initialCallback);
   expect(renders.callback - baseline.callback).toBe(1);
   expect(renders.draft).toBe(baseline.draft);
 });

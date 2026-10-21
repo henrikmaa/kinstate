@@ -16,8 +16,8 @@ New regressions cover hook-shaped method aliases through `satisfies`/instantiati
 | Maintainability refactor | Public exports preserved; 32 compiler transformations/diagnostics matched the baseline before the subsequent correctness fixes; independent React/core boundary review passed |
 | Compiler maintenance | Explicit pass contracts and syntax ownership; 39 pre-refactor code/source-map/diagnostic characterizations match; independent review passed |
 | Architecture and formatting checks | Acyclic package graph, thin entry points, declared dependencies, locked formatting; 12 architecture fixture tests passed |
-| React 19.3.1 unit/compiler/integration tests | 352 passed |
-| React 18.3.1 unit/compiler/integration tests | 351 passed, Activity test skipped because that API is unavailable |
+| React 19.3.1 unit/compiler/integration tests | 370 passed |
+| React 18.3.1 unit/compiler/integration tests | 369 passed, Activity test skipped because that API is unavailable |
 | Real garbage-collection regression probes | Released observed keys reclaimed; captured dependencies and active observers retained; unreachable source graphs collected |
 | Sustained load | 900 scopes, 900,000 historical keys, 1,000 Strict Mode mount cycles; zero active observers, balanced lifecycle cleanup, 64,888 bytes retained growth over eight checkpoints |
 | Generated component Rules of Hooks lint | Passed for service consumers, anonymous wrappers and six receiving-component forms |
@@ -28,7 +28,7 @@ New regressions cover hook-shaped method aliases through `satisfies`/instantiati
 | Comparative benchmark scenarios | 188 production Chromium comparisons: four libraries, 22 workloads, up to 50,000 rows; 940 measured samples plus 376 warmups, 10 operations per sample |
 | npm dependency audit | Zero reported vulnerabilities |
 
-Commands and scripts are in the root package manifest. `npm run test:matrix` restores the locked dependency graph after testing both React versions. The browser suite uses ports 4273 and 4274. The complete 352-test suite also passed locally on Node.js 22.23.3. CI covers both supported Node majors.
+Commands and scripts are in the root package manifest. `npm run test:matrix` restores the locked dependency graph after testing both React versions. The browser suite uses ports 4273 and 4274. The preceding 352-test suite also passed locally on Node.js 22.23.3; the readonly ownership additions were verified locally on Node.js 24.16.0. CI covers both supported Node majors.
 
 The desktop and mobile Vite layouts were also inspected visually. Browser tests check console/page errors and hydration recovery. Benchmark results use repeated production Chromium measurements with render counters, complete backing-state/output checks, and an independent fairness review. See [interactive charts](../benchmarks/report.html), [methodology](../benchmarks/README.md), and [tables/raw sample context](../benchmarks/RESULTS.md). Seven report/statistics tests, strict benchmark type checking, and 88 production adapter smoke checks pass. The report filters, raw JSON download, metric direction labels, and desktop/mobile layout are browser-verified. These checks establish the scenarios tested, not a guarantee for all JavaScript patterns or React scheduling cases. Read [limitations](LIMITATIONS.md) before integration.
 
@@ -42,10 +42,12 @@ The recorded timing run uses five samples, two warmups and ten operations per sa
 
 The extended load artifact is [production-load-long.json](validation/production-load-long.json). It measures forced-GC retained heap, with explicit event-loop turns, not peak allocation or an interactive latency budget. It combines deterministic released-object/watcher assertions with a bounded heap-growth check. A real Zustand-backed input workflow also verifies rapid publications, React callback replacement and preserved local drafts after commit.
 
-The current suites contain 100 core tests, 166 compiler tests and 86 React integration tests. The recorded full benchmark contains 188 passing comparisons/940 samples using unchanged five-sample settings; the previous collection and full-array runs are archived separately for interpretation.
+The current suites contain 109 core tests, 166 compiler tests and 95 React integration tests. The recorded full benchmark contains 188 passing comparisons/940 samples using unchanged five-sample settings; the previous collection and full-array runs are archived separately for interpretation.
 
 Full-array regression tests cover persistent computed graph membership, dynamic and throwing branches, computed equality chains, writes during evaluation, detached lazy validation, public capture independence, earliest-version retention and repeated computed reads after writes. A foreign-proxy receiver regression preserves native get behavior. Shared handler methods and a weak canonical registry reduce allocation without introducing value caches or changing class identities.
 
 Additional production regressions cover dependent-first cleanup across nested scopes, partial startup failure with active descendants, explicit ownership, activation rollback, borrowed getter receivers, stable method binding, descriptor pinning, Hook-shaped business methods and their aliases, computed keys, shadowed React imports, and diagnostics for returns crossing finally. The extended load artifact was rerun after the scope lifetime fixes.
 
 Exception-path regressions verify selective recovery after locally caught getter/helper errors, falsy thrown values, subscription-time validation and collector restoration without historical dependency propagation. Capturing function-declaration callbacks receive the same boundary checks as arrows. Cleanup reentrancy tests prevent resource resurrection and premature dependency disposal while preserving existing dependency reads and terminal disposal idempotence.
+
+Readonly consumer regressions verify the reported getter-result assignment, events, nested arrays, reflective mutation attempts, frozen data, callback/iterator values, sync/async method results, command argument normalization, native method/accessor spoofing and stable view identities. Caller-owned filter/map copies remain mutable while references to source state stay protected. Standard cleanup/load checks passed with balanced lifecycle, zero active observers and bounded retained heap; 88 production benchmark adapter smoke checks passed. Archived comparative timings predate this ownership boundary and are not current performance claims.

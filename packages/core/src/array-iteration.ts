@@ -2,6 +2,10 @@
  * A transient view coalesces index reads into one sequence dependency while
  * delegating other reads and accessors to the canonical reactive receiver.
  */
+const nativeIterations = new WeakMap<Function, Function>();
+export function arrayIterationNative(method: unknown): Function | undefined {
+  return typeof method === 'function' ? nativeIterations.get(method) : undefined;
+}
 const filter = Array.prototype.filter;
 const map = Array.prototype.map;
 export function isArrayIndex(key: PropertyKey): key is string {
@@ -18,7 +22,7 @@ export function createArrayIteration(
   readSequence: () => void,
 ): Function | undefined {
   if (typeof method !== 'function' || (method !== filter && method !== map)) return;
-  return new Proxy(method, {
+  const iteration = new Proxy(method, {
     apply(native, thisArgument, argumentsList) {
       if (thisArgument !== receiver) return Reflect.apply(native, thisArgument, argumentsList);
       const [callback, callbackThis] = argumentsList;
@@ -38,4 +42,6 @@ export function createArrayIteration(
       ]);
     },
   });
+  nativeIterations.set(iteration, method);
+  return iteration;
 }

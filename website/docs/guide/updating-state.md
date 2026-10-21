@@ -28,6 +28,8 @@ export class TodoService extends Service {
 }
 ```
 
+React components receive deeply read-only service views from `useService`. Call commands such as `todos.add(text)` or `todos.toggle(id)` to update state; direct assignments and array mutations in components are rejected, including in event handlers. Services retain their ordinary mutable `this` inside methods, and `scope.get` remains mutable outside React.
+
 A compiled component reading only `title` does not subscribe to `items`. A component reading a particular item's `done` field follows that field. Reading array length, membership, keys or individual values establishes different dependencies; structural changes notify the relevant observations.
 
 ## Keep related writes together
@@ -56,10 +58,12 @@ Equality uses `Object.is`: assigning the same primitive or reference suppresses 
 
 ## Respect ownership
 
-Mutate through the service or its canonical nested proxies. If an external variable retains the original raw object, changing that raw reference bypasses proxy notification. Stable proxy identity does not make every alias observable.
+Inside service methods or outside React through `scope.get`, mutate through the service or its canonical nested proxies. If an external variable retains the original raw object, changing that raw reference bypasses proxy notification. Stable proxy identity does not make every alias observable.
 
 Ordinary external objects supplied through `serviceInputs` have a different contract. They are borrowed immutable values, and nested writes are not observed. Replace the input at its owner and publish the replacement; use a separate service-owned draft for editing. See [external state](external-state.md).
 
 Native collections such as `Map` and `Set`, dates and custom nested instances are opaque. Replace their containing property to publish a change, or use plain records and arrays when deep reactivity is needed. Read [limitations](limitations.md) before depending on descriptors, private slots or unusual object identity behavior.
 
 Already-reactive Kinstate objects supplied as inputs retain their canonical identity and existing deep reactivity. Dependency injection is usually clearer for sharing state between services.
+
+Array copies made in a component, such as `service.rows.filter(predicate).sort(compare)`, belong to that component and remain mutable. Elements that still refer to service state are readonly; a new plain projection made by your callback belongs to you.

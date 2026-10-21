@@ -13,6 +13,10 @@ class RenameService extends Service {
   error: string | undefined = undefined;
   onSave: ((name: string) => Promise<void>) | undefined = undefined;
 
+  setDraft(value: string) {
+    this.draft = value;
+  }
+
   async save() {
     const command = this.onSave;
     if (!command || this.saving) return;
@@ -42,7 +46,7 @@ function RenameForm() {
         aria-label="Name"
         value={editor.draft}
         onChange={(event) => {
-          editor.draft = event.target.value;
+          editor.setDraft(event.target.value);
         }}
       />
       <button disabled={editor.saving}>Save</button>
@@ -79,7 +83,9 @@ The service captures the latest committed command when a save begins. Changing `
 
 ## Callback behavior stays ordinary
 
-Bindings do not execute, wrap or rebind supplied callbacks. Function identity, arguments, return values, promises and errors remain ordinary JavaScript behavior. `service.callback()` uses the service as its receiver; use an arrow or an already bound function when an external API needs another receiver.
+Inside a service, input bindings preserve the supplied callback and its identity. `this.callback()` uses the service as its receiver; use an arrow or an already bound function when an external API needs another receiver. Arguments and errors retain ordinary JavaScript behavior.
+
+React consumers receive stable callback wrappers rather than the original supplied functions. Object results are protected by the read-only view, including values resolved by returned promises; promise wrappers are stable for the same original promise. Compare consumer wrappers with consumer wrappers, rather than with the original hook callback or promise.
 
 A detached callback is a snapshot of that function. A stable service method that reads `this.onSave` obtains the current committed callback on each invocation. `useCallback` is optional for binding; use it when the source's identity contract benefits from it.
 

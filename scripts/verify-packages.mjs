@@ -70,6 +70,12 @@ class Checkout extends Service { static inject = dependencies(Cart); constructor
 const checkout: Checkout = new ServiceScope([Checkout]).get(Checkout);
 const total: number = checkout.cart.total;
 const consumer: () => Cart = () => useService(Cart);
+function ReadonlyConsumer() {
+  const cart=useService(Cart);
+  // @ts-expect-error Consumer state cannot be assigned, including in events.
+  cart.total=2;
+  void cart.total;
+}
 const binding = serviceInputs(Cart, {total: 4, onSave: async name => name.toUpperCase()});
 // @ts-expect-error Callback argument types must match.
 serviceInputs(Cart, {onSave: async (name: number) => String(name)});
