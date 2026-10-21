@@ -30,6 +30,7 @@ Benchmarks execute equivalent workloads against MobX with `observer`, Zustand se
 ```sh
 npm run build
 npm run test:packages
+npm run test:git
 npm pack -w @kinstate/core
 npm pack -w @kinstate/react
 npm pack -w @kinstate/compiler
@@ -46,3 +47,13 @@ Update the package versions together, align exact internal dependency versions, 
 Publishing remains a separate explicit action. Verify registry access and package-name availability before any first publication. Do not assume the scoped package names in this repository are already available on npm. Tag a release only after checking the published artifacts match the verified tarballs.
 
 Receiving-component mode is an explicit compiler setting: Vite client source can use reactiveProps: true; Next.js uses reactiveProps: client in use-client modules. Keep normal utilities outside PascalCase component bindings, precompile published consumers, and preserve runtime infrastructure directives. Consult [composition](COMPOSITION.md), [limitations](LIMITATIONS.md), and the [validation record](VALIDATION.md) for the verified support contract.
+
+## Git installation
+
+The private root package also serves as the Git distribution, named `kinstate`. npm Git dependencies install the root rather than selecting a workspace. Use `"kinstate": "github:henrikmaa/kinstate#<commit>"` in a consumer and import `kinstate/core`, `kinstate/react`, and `kinstate/compiler/vite` or `kinstate/compiler/next`. `kinstate` itself exports only core APIs. React integration/internal facades retain client directives. Adapter defaults target `kinstate/react`; an explicit `importSource` still overrides that default.
+
+Root `prepare` builds the three maintained packages and the thin `distribution/src` facades. npm's `bundledDependencies` packs real copies of those scoped packages and their compiler dependencies. No source rewriting or alternate reactive implementation is involved. React, Vite and Next are peers, so the consumer supplies them. The root remains private to prevent accidentally publishing the workspace as a registry package. Scoped release packaging and version alignment remain unchanged.
+
+`npm run test:git` commits a temporary snapshot of the working source, installs that actual Git commit into clean consumers, and checks core without React, shared identities, React 18/19, strict declarations, SSR, adapter defaults, lockfile reinstalls and a real Next/Webpack/SWC build. It checks that bundled packages contain files rather than workspace symlinks, that React is not bundled, and that examples/development trees are excluded. It does not alter the repository's commits or installed dependencies. This complements the scoped tarball checks; tarball success alone cannot establish Git preparation correctness.
+
+Git consumers need Git, a supported Node/npm environment and lifecycle scripts enabled. Pin a commit or tag and retain the application's lockfile. npm prepares Git dependencies with their build dependencies before packing; first preparation therefore costs more than installing a prebuilt registry release. See [npm Git dependency behavior](https://docs.npmjs.com/cli/v11/configuring-npm/package-json/#git-urls-as-dependencies) and [prepare lifecycle](https://docs.npmjs.com/cli/v11/using-npm/scripts/#life-cycle-scripts). Do not promise installation with lifecycle scripts disabled or with another package manager until separately verified. Avoid mixing the aggregate distribution and independently installed scoped copies in one application.

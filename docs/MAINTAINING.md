@@ -80,3 +80,9 @@ This restructuring preserves existing behavior. Verified fixes and remaining com
 For compiler pass contracts, extension guidance and characterization review, see [maintaining the compiler](COMPILER.md).
 
 `test:load:long` runs the extended real-GC and React mount-cycle checks. These require explicit event-loop turns because WeakRef targets remain alive within a job. Retained-heap budgets complement deterministic watcher, lifecycle and released-object assertions; they do not establish peak-memory bounds. Run load checks before an isolated timing benchmark.
+
+## Git distribution
+
+`distribution/src` contains thin typed facades over the maintained scoped packages. Keep runtime state in those packages; the facades only re-export APIs and select `kinstate/react` as the compiler import source. Preserve React client directives and keep the root/core entries free of React imports. Use nullish defaults so an optional `importSource: undefined` cannot accidentally select the scoped runtime.
+
+The root package stays private. Its preparation builds declarations and bundles the three workspace packages through npm's native bundled dependencies. Keep their versions aligned with root dependencies. `npm run test:git` validates a real source Git install, complete artifacts, peer identity and lockfile reinstalls; run it in addition to scoped package checks after changing root metadata, lifecycle scripts or facades.

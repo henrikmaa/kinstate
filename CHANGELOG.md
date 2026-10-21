@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- Added a Git-installable root `kinstate` distribution with native bundled workspace packages, build preparation, typed core/React/compiler entries and matching Vite/Next defaults. Clean Git-consumer checks cover lockfile reinstalls, React peers and real Next/Webpack/SWC builds.
+
 - Relaxed third-party callback boundaries for primitive snapshot formatters and unrelated hook callbacks inside service-derived chart/table options. Preserved identities and method receivers, with conservative live/mutable capture guards and async/declaration-shadow regressions.
 
 - Made React service consumers readonly: getter/nested state and arrays require service commands for mutation, with runtime protection for reflection, callbacks and async method results. Consumer views are stable and distinct from mutable core instances; command argument normalization and optimized array tracking preserve core ownership.

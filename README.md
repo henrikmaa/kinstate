@@ -35,6 +35,31 @@ function App() {
 
 Changing `name` does not schedule `Counter`. Primitive fields, nested plain objects, arrays, computed getters, and changing conditional dependencies are supported. Mutations use `Object.is` equality, and methods retain stable bound references. No service-class React imports, component wrappers, selectors, or per-field declarations are required.
 
+## Install from Git
+
+Before a registry release, install the repository as the single `kinstate` package:
+
+```json
+{
+  "dependencies": {
+    "kinstate": "github:henrikmaa/kinstate#main"
+  }
+}
+```
+
+Run `npm install`. Use a commit SHA instead of `main` when pinning an exact revision, and commit your application's lockfile. Git installation requires Git, a supported Node version, and lifecycle scripts enabled. npm prepares the package from source, so its first install also installs build dependencies.
+
+Use these imports in a Git consumer:
+
+```tsx
+import { Service } from 'kinstate/core';
+import { ServiceProvider, useService } from 'kinstate/react';
+```
+
+For Vite, import the plugin from `kinstate/compiler/vite`. For Next.js, import `withKinstate` from `kinstate/compiler/next`; both configure `kinstate/react` tracking automatically. The Babel plugin is available at `kinstate/compiler`. The root `kinstate` entry also exports core APIs and works without React.
+
+The Git package bundles the three scoped packages and their compiler dependencies, preserving one shared core/runtime. React, Vite and Next remain application peers. Do not point each `@kinstate/*` dependency at the same repository URL, or combine Git and scoped registry copies in one application: npm selects the repository root, and separate runtime copies have separate service contexts. Existing examples below use the scoped workspace/release imports; replace `@kinstate/` with `kinstate/` when using the Git distribution. See [installation and release checks](docs/RELEASE.md#git-installation).
+
 ## Build and run
 
 Use Node.js 24.x and npm. CI also targets Node.js 22.x, version 22.13 or newer. The packages are ESM and support React 18.3.1 and React 19.

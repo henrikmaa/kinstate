@@ -4,6 +4,8 @@ Server rendering needs request-local service ownership. Never put a mutable `Ser
 
 The Next.js 16 App Router adapter supports Webpack and Turbopack while keeping Next's SWC compiler enabled.
 
+For a [Git installation](quick-start.md#install-directly-from-git), use `kinstate/core`, `kinstate/react` and `kinstate/compiler/next` instead of the scoped imports shown below. The adapter selects the matching runtime automatically. Keep the same client/server boundaries.
+
 ## Configure client instrumentation
 
 ```js

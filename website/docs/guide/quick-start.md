@@ -2,6 +2,31 @@
 
 This repository contains working local packages and examples. Use Node.js 24.x and npm; CI also covers Node.js 22.13 and newer within the supported Node 22 major.
 
+## Install directly from Git
+
+Add the repository as one dependency in your application's `package.json`:
+
+```json
+{
+  "dependencies": {
+    "kinstate": "github:henrikmaa/kinstate#main"
+  }
+}
+```
+
+Then run `npm install`. For reproducible upgrades, use a commit SHA in place of `main` and commit the lockfile. Git installation builds from source and requires Git and npm lifecycle scripts. The first preparation installs the workspace's build dependencies; the installed package contains built artifacts and the bundled core, React and compiler packages.
+
+Use `kinstate/core` in service classes and `kinstate/react` in components:
+
+```tsx
+import { Service } from 'kinstate/core';
+import { ServiceProvider, useService } from 'kinstate/react';
+```
+
+Configure Vite with `kinstate/compiler/vite`, or Next.js with `kinstate/compiler/next`. These adapters automatically track imports from `kinstate/react`. The Babel plugin is `kinstate/compiler`. The root `kinstate` entry exports only core APIs, so standalone services do not require React.
+
+The examples throughout these docs use the scoped package layout. In a Git consumer, replace `@kinstate/` imports with `kinstate/`. Install the Git package once; do not assign the same repository URL to each `@kinstate/*` name or mix Git and registry copies. Git dependencies select the repository root, and separate runtime copies have separate provider contexts.
+
 ## Run the maintained example
 
 From the repository root:
