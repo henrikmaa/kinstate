@@ -15,6 +15,7 @@ Named components, uppercase component variable bindings, and anonymous consumers
 
 These forms are rejected or unsupported:
 
+- Await/yield inside destructuring computed keys or defaults. Evaluate those expressions before the pattern. Awaited/yielded initializers are supported and retain their original async/generator context.
 - `useService` in a custom hook, async component, generator, or anonymous callback outside recognized React memo/forwardRef wrappers.
 - `useService(CounterService).count`; assign the hook result to a local variable first.
 - Reassigning a service binding or escaping the service into an external helper, custom-component prop, or return value.

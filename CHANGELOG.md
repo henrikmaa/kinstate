@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- Fixed integration defects found by migrating drawDB: preserve async/generator destructuring execution context, diagnose suspended pattern defaults/keys, and accept React-injected vendor function defaults through exact descriptor provenance without weakening authored callback guards.
+
 - Closed production audit defects: track constructor projection reads; recognize React state/reducer dispatch initialized from service data; release removed callback closures from consumer caches; keep borrowed payload validation lazy; validate symbol-keyed callback metadata and readonly native props correctly.
 
 - Added a Git-installable root `kinstate` distribution with native bundled workspace packages, build preparation, typed core/React/compiler entries and matching Vite/Next defaults. Clean Git-consumer checks cover lockfile reinstalls, React peers and real Next/Webpack/SWC builds.

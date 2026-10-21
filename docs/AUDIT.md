@@ -98,6 +98,10 @@ These fixes establish the listed scenarios. They are not a blanket production-re
 
 ## Additional production audit
 
+The real drawDB migration exposed two additional integration defects. Destructuring lowering previously moved an awaited initializer into a synchronous collection callback, producing invalid JavaScript. Initializers that suspend now execute in their original lexical function; only resolved-value destructuring enters collection. Suspended computed keys/defaults receive an explicit diagnostic. Ten regressions cover async/generator execution, evaluation order, errors, lexical context and diagnostics; the frozen compiler corpus remains unchanged.
+
+React 18 also inserts UI-library `defaultProps` into created elements. Validating a Semi UI dropdown element rejected its own default ref callback. Element validation now recognizes only an exact own function-valued data default on the receiver; it still validates function metadata, authored overrides, certified captures, object defaults and getters. Nine regressions cover these boundaries. The 451-test framework suite, type checks, architecture/format checks and clean packed React 18/19 consumers pass after both fixes.
+
 The 2026-10-21 follow-up found defects despite a successful CI run. All received regressions rather than readiness claims based only on the existing suite:
 
 - External constructor projections read nested state outside a collector. Whole `new` expressions now collect synchronous constructor reads, preserving class invocation semantics and selective renders. Memoization cannot conceal those reads through constructor arguments or local class/alias initializers.

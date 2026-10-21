@@ -9,6 +9,30 @@ import {
 
 export type BoundaryKind = 'value' | 'command' | 'ref';
 
+/** React may insert vendor callback defaults into an otherwise authored element. */
+function isOwnFunctionDefault(receiver: unknown, key: PropertyKey, value: unknown): boolean {
+  if (typeof value !== 'function' || getCallbackCertificate(value)) return false;
+  if (
+    receiver === null ||
+    (typeof receiver !== 'function' && typeof receiver !== 'object') ||
+    isReactive(receiver)
+  )
+    return false;
+  const defaults = Object.getOwnPropertyDescriptor(receiver, 'defaultProps');
+  if (
+    !defaults ||
+    !('value' in defaults) ||
+    defaults.value === null ||
+    typeof defaults.value !== 'object' ||
+    isReactive(defaults.value)
+  )
+    return false;
+  const prototype = Object.getPrototypeOf(defaults.value);
+  if (prototype !== null && prototype !== Object.prototype) return false;
+  const property = Object.getOwnPropertyDescriptor(defaults.value, key);
+  return !!property && 'value' in property && Object.is(property.value, value);
+}
+
 function assertRef(value: unknown): void {
   if (value == null || typeof value === 'function') return;
   if (typeof value === 'object' && !isReactive(value)) {
@@ -135,6 +159,26 @@ export function assertComponentBoundary(
           (field.value == null || typeof field.value === 'function')
         )
           continue;
+        if (type && 'value' in type && isOwnFunctionDefault(type.value, key, field.value)) {
+          // Provenance applies to this prop only. Inspect metadata without treating
+          // the vendor's callback body as a deferred authored render callback.
+          const callback = field.value as Function;
+          visited.add(callback);
+          try {
+            const metadata = Object.getOwnPropertyDescriptors(callback);
+            for (const metadataKey of Reflect.ownKeys(metadata)) {
+              const descriptor = Reflect.get(metadata, metadataKey) as PropertyDescriptor;
+              if (!('value' in descriptor))
+                throw new TypeError(
+                  'Reactive callback properties must use data properties, not getters.',
+                );
+              visit(descriptor.value);
+            }
+          } finally {
+            visited.delete(callback);
+          }
+          continue;
+        }
         visit(field.value);
       }
       return;
