@@ -6,7 +6,11 @@ import {
   registerReadonlyView,
   untracked,
 } from '@kinstate/core/internal';
-import { readNativeValue, readonlyNativeMethod } from './readonly-native.js';
+import {
+  isReadonlyNativeMethod,
+  readNativeValue,
+  readonlyNativeMethod,
+} from './readonly-native.js';
 
 /** Keep callable signatures intact, including generic and overloaded commands. */
 export type ReadonlyServiceValue<T> = T extends (...args: any[]) => any
@@ -79,7 +83,7 @@ export function readonlyServiceValue<T>(value: T): ReadonlyServiceValue<T> {
     : array
       ? []
       : Object.create(prototype);
-  let methods: Map<PropertyKey, { source: Function; view: unknown }> | undefined;
+  let specializedMethods: WeakMap<Function, unknown> | undefined;
   let view: object;
   const read = (key: PropertyKey): unknown => {
     const result =
@@ -87,33 +91,37 @@ export function readonlyServiceValue<T>(value: T): ReadonlyServiceValue<T> {
     // Constructors are inert class tokens, and native array species need a constructable function.
     if (key === 'constructor' && typeof result === 'function') return result;
     if (typeof result === 'function') {
-      const previous = methods?.get(key);
-      if (previous && previous.source === result) return previous.view;
-      const optimized = array
-        ? createReadonlyArrayIteration(source, view, result, readonlyServiceValue)
-        : undefined;
-      // Copies/accumulators belong to the caller. Elements read from state remain readonly.
-      const next =
-        array && (optimized || ownedArrayResults.has(result))
-          ? new Proxy(optimized ?? result, {
-              apply(method, receiver, args) {
-                const output = Reflect.apply(method, receiver, args);
-                return isReactive(output) ? readonlyServiceValue(output) : output;
-              },
-              set: reject,
-              deleteProperty: reject,
-              defineProperty: reject,
-              setPrototypeOf: reject,
-              preventExtensions: reject,
-            })
-          : ordinary || callable
-            ? readonlyServiceValue(result)
-            : readonlyNativeMethod(source, key, result, view, readonlyServiceValue, reject);
-      if (array && (optimized || ownedArrayResults.has(result))) {
-        readonlyViews.add(next as object);
-        registerReadonlyView(next as object, optimized ?? result);
+      if (ordinary || callable) {
+        if (!array) return readonlyServiceValue(result);
+        const previous = specializedMethods?.get(result);
+        if (previous) return previous;
+        const optimized = createReadonlyArrayIteration(source, view, result, readonlyServiceValue);
+        if (!optimized && !ownedArrayResults.has(result)) return readonlyServiceValue(result);
+        // Copies/accumulators belong to the caller. Elements read from state remain readonly.
+        const next = new Proxy(optimized ?? result, {
+          apply(method, receiver, args) {
+            const output = Reflect.apply(method, receiver, args);
+            return isReactive(output) ? readonlyServiceValue(output) : output;
+          },
+          set: reject,
+          deleteProperty: reject,
+          defineProperty: reject,
+          setPrototypeOf: reject,
+          preventExtensions: reject,
+        });
+        readonlyViews.add(next);
+        registerReadonlyView(next, optimized ?? result);
+        (specializedMethods ??= new WeakMap()).set(result, next);
+        return next;
       }
-      (methods ??= new Map()).set(key, { source: result, view: next });
+      // Only genuine native reads need receiver-specific wrappers. Reject aliases
+      // before consulting the cache: an intrinsic under an unsupported key is opaque.
+      if (!isReadonlyNativeMethod(source, key, result))
+        return readonlyNativeMethod(source, key, result, view, readonlyServiceValue, reject);
+      const previous = specializedMethods?.get(result);
+      if (previous) return previous;
+      const next = readonlyNativeMethod(source, key, result, view, readonlyServiceValue, reject);
+      (specializedMethods ??= new WeakMap()).set(result, next);
       return next;
     }
     return readonlyServiceValue(result);

@@ -84,12 +84,24 @@ export function validateMemoCall(
   let readsService = callback.isIdentifier() && derivedBindings.has(callback.node.name);
   callback.traverse({
     ReferencedIdentifier(ref) {
+      let parent = ref.parentPath;
+      while (
+        parent.isTSAsExpression() ||
+        parent.isTSTypeAssertion() ||
+        parent.isTSNonNullExpression() ||
+        parent.isTSSatisfiesExpression() ||
+        parent.isTSInstantiationExpression() ||
+        parent.isParenthesizedExpression()
+      )
+        parent = parent.parentPath;
       if (
         serviceBindings.has(ref.node.name) ||
         (derivedBindings.has(ref.node.name) &&
-          (ref.parentPath.isMemberExpression() ||
-            ref.parentPath.isOptionalMemberExpression() ||
-            ref.parentPath.isCallExpression()))
+          (parent.isMemberExpression() ||
+            parent.isOptionalMemberExpression() ||
+            parent.isCallExpression() ||
+            parent.isOptionalCallExpression() ||
+            parent.isNewExpression()))
       )
         readsService = true;
     },

@@ -63,7 +63,9 @@ export function assertComponentBoundary(
           );
         visited.add(current);
         assertSnapshotCaptures(captures.read());
-        for (const field of Object.values(Object.getOwnPropertyDescriptors(current))) {
+        const fields = Object.getOwnPropertyDescriptors(current);
+        for (const key of Reflect.ownKeys(fields)) {
+          const field = Reflect.get(fields, key) as PropertyDescriptor;
           if (!('value' in field))
             throw new TypeError(
               'Reactive callback properties must use data properties, not getters.',

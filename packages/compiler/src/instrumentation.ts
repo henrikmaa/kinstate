@@ -58,6 +58,11 @@ export function instrumentComponent(context: ComponentContext, frameHook: t.Iden
           wrap(path as NodePath<t.Expression>);
       },
     },
+    NewExpression: {
+      exit(path) {
+        wrap(path);
+      },
+    },
     AssignmentExpression: {
       exit(path) {
         if (t.isObjectPattern(path.node.left) || t.isArrayPattern(path.node.left)) wrap(path);

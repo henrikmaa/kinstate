@@ -11,7 +11,7 @@ function Count() {
 }
 ```
 
-Named components, uppercase component variable bindings, and anonymous consumers inside React memo/forwardRef (including import aliases and nested wrappers) are supported. Import aliases and namespace imports are supported. Computed reads, optional chaining, synchronous method calls, destructuring, `in`, key enumeration, spreads, and synchronous array callbacks are tracked. For-of array reads and for-in key reads use explicit frame operations.
+Named components, uppercase component variable bindings, and anonymous consumers inside React memo/forwardRef (including import aliases and nested wrappers) are supported. Import aliases and namespace imports are supported. Computed reads, optional chaining, synchronous method calls and constructor projections, destructuring, `in`, key enumeration, spreads, and synchronous array callbacks are tracked. For-of array reads and for-in key reads use explicit frame operations.
 
 These forms are rejected or unsupported:
 
@@ -19,7 +19,7 @@ These forms are rejected or unsupported:
 - `useService(CounterService).count`; assign the hook result to a local variable first.
 - Reassigning a service binding or escaping the service into an external helper, custom-component prop, or return value.
 - Capturing a parent's service in a nested component or deferred render callback. Resolve the service inside each consuming component.
-- Hiding service reads, including member access or calls through aliases, inside `useMemo`. Command callbacks using `useCallback(() => service.save(), [service])` and effects with stable service dependencies are supported. Read primitive values before the hook and list those values in dependencies. Plain local expressions such as `const count = service.count; useMemo(() => count * 2, [count])` are supported. The conservative analysis can reject helper calls receiving derived aliases even when the application knows a value is primitive; move that calculation outside memoization.
+- Hiding service reads, including member access, calls or constructor projections through aliases, inside `useMemo`. Command callbacks using `useCallback(() => service.save(), [service])` and effects with stable service dependencies are supported. Read primitive values before the hook and list those values in dependencies. Plain local expressions such as `const count = service.count; useMemo(() => count * 2, [count])` are supported. The conservative analysis can reject helper calls receiving derived aliases even when the application knows a value is primitive; move that calculation outside memoization.
 - Pattern initializers containing closures over mutable lexical header bindings, and reactive expressions containing nested hook calls, `await`, or `yield`. Separate hook results into local bindings before calling service methods.
 - Component returns from a `try` or `catch` that must execute a `finally` block are diagnosed. Move the return after the `try`/`finally`, or move that computation into a synchronous helper. This prevents a return from closing the render frame before a later `finally` return evaluates its reads.
 - Actual React Hooks accessed through computed namespace keys must use a named import or ordinary dot access. Service business methods with Hook-shaped names are supported, including immutable aliases and destructuring; reassigned Hook-shaped method aliases are diagnosed because their callable role is ambiguous.

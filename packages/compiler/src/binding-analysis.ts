@@ -39,7 +39,8 @@ export function collectDerivedBindings(context: MutableComponentContext): void {
       Function(path) {
         skipNestedConsumer(path, context);
       },
-      FunctionDeclaration(path) {
+      'FunctionDeclaration|ClassDeclaration'(path) {
+        if (!(path.isFunctionDeclaration() || path.isClassDeclaration())) return;
         if (!path.node.id || !referencesDerived(path, context)) return;
         if (!derivedBindings.has(path.node.id.name)) {
           derivedBindings.add(path.node.id.name);

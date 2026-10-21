@@ -16,7 +16,7 @@ The Next.js adapter (`next.ts`) composes documented Webpack/Turbopack configurat
 | Service validation | `service-validation.ts` | Checks reassignment and service reference escapes. Reads completed binding facts. |
 | JSX guards | `component-boundaries.ts` | Installs guards on custom attributes, then checks nested captures and guards children in a second traversal. |
 | Call guards and validation | `analysis.ts` | In one traversal, installs factory guards before validating memo calls. Keeping these operations interleaved preserves traversal behavior and diagnostic precedence. |
-| Read instrumentation | `instrumentation.ts` | Uses exit visitors for expression reads; delegates chain/reference handling, patterns and iteration. Seals component returns without sealing ordinary callback returns. |
+| Read instrumentation | `instrumentation.ts` | Uses exit visitors for expression reads and constructor invocations; delegates chain/reference handling, patterns and iteration. Seals component returns without sealing ordinary callback returns. |
 | Frame installation | `component.ts` | Adds the documented memoization opt-out, frame hook and fallthrough finish only after instrumentation, so generated setup is not transformed. |
 | Program import | `plugin.ts` | Inserts the generated internal hook import after all component owners are processed. |
 
@@ -24,6 +24,7 @@ The orchestrator intentionally says `analyzeAndGuardComponent`: this stage inclu
 
 ## Syntax ownership
 
+- `react-state-setters.ts` proves stable second-tuple dispatch bindings from imported React `useState`/`useReducer`, including aliases. Initial values may be service-derived; this does not grant trust to state-held callback values or shadowed hooks.
 - `boundary-callbacks.ts` certifies individual callbacks using lexical captures, without replacing callback identities or executing their bodies. The React runtime owns weak certificates and primitive-capture checks in `callback-boundaries.ts`. Unknown derived factories, mutable captures and shadowed declaration captures remain guarded. Deferred callback validation also applies to compiled receivers.
 - `react-calls.ts` owns recognition of supported React hooks, component wrappers and element factories. Keep import-alias policy consistent with `imports.ts`.
 - `business-calls.ts` normalizes Hook-shaped service method names before validation/instrumentation. Actual React import bindings must retain their Hook semantics; an ordinary service method must still collect synchronous reads.

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "core": {
+    "schemaVersion": 1,
+    "mode": "long",
+    "runtime": "v24.16.0",
+    "config": {
+      "checkpoints": 8,
+      "scopesPerCheckpoint": 100,
+      "rows": 10000,
+      "keysPerCheckpoint": 100000
+    },
+    "durationMs": 105225.375713,
+    "checkpoints": [
+      {
+        "index": 0,
+        "heapBytes": 13096488,
+        "initialized": 200,
+        "disposed": 200
+      },
+      {
+        "index": 1,
+        "heapBytes": 13104840,
+        "initialized": 300,
+        "disposed": 300
+      },
+      {
+        "index": 2,
+        "heapBytes": 13118488,
+        "initialized": 400,
+        "disposed": 400
+      },
+      {
+        "index": 3,
+        "heapBytes": 13131672,
+        "initialized": 500,
+        "disposed": 500
+      },
+      {
+        "index": 4,
+        "heapBytes": 13148528,
+        "initialized": 600,
+        "disposed": 600
+      },
+      {
+        "index": 5,
+        "heapBytes": 13150608,
+        "initialized": 700,
+        "disposed": 700
+      },
+      {
+        "index": 6,
+        "heapBytes": 13151808,
+        "initialized": 800,
+        "disposed": 800
+      },
+      {
+        "index": 7,
+        "heapBytes": 13151608,
+        "initialized": 900,
+        "disposed": 900
+      }
+    ],
+    "retainedGrowthBytes": 55320,
+    "growthBudgetBytes": 16777216,
+    "initialized": 900,
+    "disposed": 900,
+    "activeObservers": 0,
+    "historicalKeys": 900000,
+    "scopeCycles": 900,
+    "note": "Forced-GC retained heap, not peak memory or a timing benchmark. Async stale-result suppression is explicit service policy."
+  },
+  "react": {
+    "mountCycles": 1000,
+    "numPassedTests": 1,
+    "durationMs": 1769,
+    "success": true
+  }
+}

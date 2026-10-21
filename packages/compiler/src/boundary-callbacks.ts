@@ -4,6 +4,7 @@ import type { ComponentContext } from './context.js';
 import { referencesDerived } from './binding-analysis.js';
 import { isKnownReactHook } from './react-calls.js';
 import { isHook } from './ast.js';
+import { isReactStateSetter } from './react-state-setters.js';
 
 type Binding = NonNullable<ReturnType<NodePath['scope']['getBinding']>>;
 
@@ -84,6 +85,7 @@ function isLocalCapture(binding: Binding | undefined, context: ComponentContext)
 
 /** Hook outputs without service inputs remain ordinary external commands. */
 function isUnrelatedHookBinding(binding: Binding, context: ComponentContext): boolean {
+  if (isReactStateSetter(binding)) return true;
   if (
     context.derivedBindings.has(binding.identifier.name) ||
     !binding.constant ||

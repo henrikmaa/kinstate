@@ -46,6 +46,18 @@ export function readNativeValue(source: object, key: PropertyKey): unknown {
   return Reflect.get(source, key, source);
 }
 
+/** Only supported intrinsic keys may share a receiver-specific cached wrapper. */
+export function isReadonlyNativeMethod(
+  source: object,
+  key: PropertyKey,
+  method: Function,
+): boolean {
+  return (
+    (key === 'toString' && method === objectToString) ||
+    descriptors.get(Object.getPrototypeOf(source))?.get(key)?.value === method
+  );
+}
+
 /** Only exact intrinsic functions receive branded receivers; names/tags do not grant authority. */
 export function readonlyNativeMethod(
   source: object,

@@ -95,3 +95,13 @@ At 50,000 rows, a single visible-row edit measures 0.03 ms/op and renders one co
 - A provider input normalized by service logic could repeatedly republish itself during the bridge's own consistency refresh. Publication now follows provider snapshots, with a Strict Mode regression checking normalization, later reassertion, drafts and lifecycle balance.
 
 These fixes establish the listed scenarios. They are not a blanket production-readiness guarantee or verification of every Next major and third-party plugin combination.
+
+## Additional production audit
+
+The 2026-10-21 follow-up found defects despite a successful CI run. All received regressions rather than readiness claims based only on the existing suite:
+
+- External constructor projections read nested state outside a collector. Whole `new` expressions now collect synchronous constructor reads, preserving class invocation semantics and selective renders. Memoization cannot conceal those reads through constructor arguments or local class/alias initializers.
+- A service-derived initial value incorrectly tainted React's dispatch capability. Import-aware tuple provenance admits only genuine state/reducer setters and stable aliases, while state-held live closures and shadowed hooks remain guarded.
+- Strong per-property consumer method caches retained 500 deleted callback closures with an empty source dictionary. Weak caches now release all 500 in the real-GC regression, while native provenance and stable references remain protected.
+- Compiled receiver validation traversed an entire borrowed API payload. A 10,000-row diagnostic enumerated 10,001 objects and materialized readonly views; the corrected path enumerates none before the receiver reads data. This is a traversal invariant, not a new comparative benchmark measurement. Readonly native Map/Set props also avoid invalid native calls on proxies.
+- Symbol-keyed async callbacks and callbacks nested in certified function metadata could escape deferred validation. Validators now inspect all own descriptor keys and the relevant callback metadata without executing callbacks or getters.

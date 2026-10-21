@@ -1,4 +1,5 @@
 import { isReactive } from '@kinstate/core';
+import { unwrapReadonlyView } from '@kinstate/core/internal';
 
 const callbackCaptures = new WeakMap<
   Function,
@@ -43,12 +44,24 @@ export function assertDeferredCaptures(value: unknown, visited = new WeakSet<obj
         );
       assertSnapshotCaptures(certificate.read());
     }
+    if (certificate) {
+      const descriptors = Object.getOwnPropertyDescriptors(value);
+      for (const key of Reflect.ownKeys(descriptors)) {
+        const field = Reflect.get(descriptors, key) as PropertyDescriptor;
+        if ('value' in field) assertDeferredCaptures(field.value, visited);
+      }
+    }
     return;
   }
-  // Observable containers already have a tracking owner. Only inspect plain configuration data.
-  if (isReactive(value)) return;
-  for (const field of Object.values(Object.getOwnPropertyDescriptors(value)))
+  // Compiled receivers own reads from live service views, including opaque API
+  // payloads. Enumerating those views eagerly materializes every nested value
+  // and cannot brand-check native Map/Set proxies. Inspect authored config only.
+  if (isReactive(value) || unwrapReadonlyView(value) !== value) return;
+  const descriptors = Object.getOwnPropertyDescriptors(value);
+  for (const key of Reflect.ownKeys(descriptors)) {
+    const field = Reflect.get(descriptors, key) as PropertyDescriptor;
     if ('value' in field) assertDeferredCaptures(field.value, visited);
+  }
   if (value instanceof Map && Object.getPrototypeOf(value) === Map.prototype)
     for (const [key, entry] of Map.prototype.entries.call(value)) {
       assertDeferredCaptures(key, visited);
