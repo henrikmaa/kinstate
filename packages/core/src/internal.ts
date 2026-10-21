@@ -5,4 +5,4 @@ export {
   normalizeServiceArgument,
 } from './readonly-views.js';
 export { createReadonlyArrayIteration, isServiceMethod } from './reactive.js';
-export { untracked } from './dependencies.js';
+export { untracked, collectInto } from './dependencies.js';

@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- Reduced render tracking allocations with a private accumulating collector, scalar boundary fast paths, and reuse of validated transitively immutable data. Mutable configs, callback captures and native collections remain freshly validated.
+
 - Fixed severe drawDB drag latency caused by callback validation traversing React element ownership graphs. Validate rendered props only, keep refs imperative, and retain nested callback safety checks without application memoization workarounds.
 
 - Fixed integration defects found by migrating drawDB: preserve async/generator destructuring execution context, diagnose suspended pattern defaults/keys, and accept React-injected vendor function defaults through exact descriptor provenance without weakening authored callback guards.

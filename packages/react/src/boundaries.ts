@@ -9,6 +9,40 @@ import {
 
 export type BoundaryKind = 'value' | 'command' | 'ref';
 
+// Only transitively immutable validated data is reusable. Authored configs,
+// callback captures and native collection contents may change between checks.
+const immutableValues = new WeakSet<object>();
+function isImmutableValue(value: unknown): boolean {
+  return (
+    value === null ||
+    (typeof value !== 'object' && typeof value !== 'function') ||
+    (typeof value === 'object' && immutableValues.has(value))
+  );
+}
+
+function rememberImmutable(
+  value: object,
+  fields: PropertyDescriptorMap,
+  elementProps = false,
+): boolean {
+  if (!Object.isFrozen(value)) return false;
+  for (const key of Reflect.ownKeys(fields)) {
+    if (elementProps && (key === 'key' || key === 'ref')) continue;
+    const field = Reflect.get(fields, key) as PropertyDescriptor;
+    if (!('value' in field)) return false;
+    if (
+      elementProps &&
+      typeof key === 'string' &&
+      /^on[A-Z]/.test(key) &&
+      (field.value == null || typeof field.value === 'function')
+    )
+      continue;
+    if (!isImmutableValue(field.value)) return false;
+  }
+  if (!elementProps) immutableValues.add(value);
+  return true;
+}
+
 /** React may insert vendor callback defaults into an otherwise authored element. */
 function isOwnFunctionDefault(receiver: unknown, key: PropertyKey, value: unknown): boolean {
   if (typeof value !== 'function' || getCallbackCertificate(value)) return false;
@@ -56,6 +90,13 @@ export function assertComponentBoundary(
   kind: BoundaryKind,
   receiver?: unknown,
 ): void {
+  // Evaluated scalar props cannot carry live state or deferred callbacks. This
+  // is the common render path; do not allocate a graph walk for each text prop.
+  if (
+    kind === 'value' &&
+    (value === null || (typeof value !== 'object' && typeof value !== 'function'))
+  )
+    return;
   if (kind === 'value' && isReactiveComponent(receiver)) {
     assertDeferredCaptures(value);
     return;
@@ -108,9 +149,9 @@ export function assertComponentBoundary(
         'Reactive objects cannot cross component boundaries. Read primitive values, derive plain data during rendering, or resolve useService in the receiving component.',
       );
     }
+    if (immutableValues.has(current)) return;
     if (visited.has(current)) return;
     visited.add(current);
-    const fields = Object.getOwnPropertyDescriptors(current);
     const prototype = Object.getPrototypeOf(current);
     if (
       prototype !== null &&
@@ -129,13 +170,13 @@ export function assertComponentBoundary(
     }
     // Branding access must be safe before using React's public predicate. Valid
     // React19 dev elements may themselves contain a React-owned ref getter.
-    const branding = fields.$$typeof;
+    const branding = Object.getOwnPropertyDescriptor(current, '$$typeof');
     if (branding && !('value' in branding))
       throw new TypeError('Reactive component values must use data properties, not getters.');
     if (branding && isValidElement(current)) {
-      const type = fields.type;
+      const type = Object.getOwnPropertyDescriptor(current, 'type');
       if (type && 'value' in type && isReactiveComponent(type.value)) return;
-      const props = fields.props;
+      const props = Object.getOwnPropertyDescriptor(current, 'props');
       if (!props || !('value' in props) || props.value === null || typeof props.value !== 'object')
         throw new TypeError('React element props must be a plain data object.');
       const propsPrototype = Object.getPrototypeOf(props.value);
@@ -181,8 +222,14 @@ export function assertComponentBoundary(
         }
         visit(field.value);
       }
+      // React freezes element shells and props in development. Reuse successful
+      // checks for fully immutable subtrees when outer menus revisit children.
+      // A frozen shell containing mutable config remains ineligible.
+      if (Object.isFrozen(current) && rememberImmutable(props.value, propFields, true))
+        immutableValues.add(current);
       return;
     }
+    const fields = Object.getOwnPropertyDescriptors(current);
     for (const key of Reflect.ownKeys(fields)) {
       const field = Reflect.get(fields, key) as PropertyDescriptor;
       if (!('value' in field))
@@ -198,6 +245,8 @@ export function assertComponentBoundary(
     }
     for (const key of Reflect.ownKeys(fields))
       visit((Reflect.get(fields, key) as PropertyDescriptor).value);
+    if (prototype === null || prototype === Object.prototype || prototype === Array.prototype)
+      rememberImmutable(current, fields);
   };
   visit(value);
 }

@@ -1,4 +1,5 @@
-import { collectDependencies, type Dependency } from '@kinstate/core';
+import type { Dependency } from '@kinstate/core';
+import { collectInto } from '@kinstate/core/internal';
 import { assertComponentBoundary, type BoundaryKind } from './boundaries.js';
 import { certifyBoundaryCallback } from './callback-boundaries.js';
 
@@ -17,7 +18,7 @@ export class RenderFrame {
     // Publish reads to this attempt's map even when user code throws. A locally
     // caught getter/helper failure renders a fallback that depends on those reads.
     // The collector preserves earliest versions for subscription-time validation.
-    return collectDependencies(read, this.dependencies).value;
+    return collectInto(read, this.dependencies);
   }
 
   /** Compiler boundary for already evaluated custom-component values and commands. */

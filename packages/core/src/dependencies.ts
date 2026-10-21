@@ -63,6 +63,17 @@ export function collectDependencies<T>(
   }
 }
 
+/** Private accumulating collector: render attempts already own their destination map. */
+export function collectInto<T>(fn: () => T, destination: Map<Dependency, number>): T {
+  // Nested reads in the same attempt need neither an intermediate map nor a new
+  // collection identity. Its existing entries retain the earliest observed version.
+  if (collector === destination) return fn();
+  if (collector === undefined) return inCollection(fn, destination);
+  // A distinct outer observation must receive only this call's reads. Preserve
+  // the normal propagation contract for computed graphs and other render attempts.
+  return collectDependencies(fn, destination).value;
+}
+
 function inCollection<T>(fn: () => T, destination: Collector): T {
   const previous = collector;
   const previousId = activeCollectionId;

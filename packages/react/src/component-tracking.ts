@@ -15,12 +15,14 @@ export function markReactiveWrapper<T extends object>(wrapper: T, inner: unknown
 
 export function isReactiveComponent(component: unknown): boolean {
   let current = component;
-  const visited = new Set<object>();
+  let visited: Set<object> | undefined;
   while (current !== null && (typeof current === 'object' || typeof current === 'function')) {
     if (receivers.has(current)) return true;
-    if (visited.has(current)) return false;
-    visited.add(current);
-    current = wrappers.get(current);
+    const inner = wrappers.get(current);
+    if (inner === undefined) return false;
+    if (visited?.has(current)) return false;
+    (visited ??= new Set()).add(current);
+    current = inner;
   }
   return false;
 }
