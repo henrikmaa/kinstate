@@ -7,6 +7,9 @@
     "declarationMap": false
   },
   "include": [
+    "browser-tests/**/*.ts",
+    "next-dev-tests/**/*.ts",
+    "playwright.config.ts",
     "packages/tests/**/*.ts",
     "packages/tests/**/*.tsx",
     "packages/core/test/**/*.ts",

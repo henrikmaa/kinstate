@@ -31,8 +31,8 @@
     "bench:test": "node --test benchmarks/report.test.mjs",
     "bench:typecheck": "tsc -p benchmarks/tsconfig.json",
     "bench:smoke": "npm run build && tsx benchmarks/smoke.mjs",
-    "format": "prettier --write \"packages/{core,react,compiler,tests}/**/*.{ts,tsx,mjs}\" \"benchmarks/**/*.{ts,tsx,mjs,css}\" \"scripts/*.mjs\" \"website/**/*.{ts,tsx,mjs,cjs,css}\"",
-    "format:check": "prettier --check \"packages/{core,react,compiler,tests}/**/*.{ts,tsx,mjs}\" \"benchmarks/**/*.{ts,tsx,mjs,css}\" \"scripts/*.mjs\" \"website/**/*.{ts,tsx,mjs,cjs,css}\"",
+    "format": "prettier --write \"packages/{core,react,compiler,tests}/**/*.{ts,tsx,mjs,cts}\" \"benchmarks/**/*.{ts,tsx,mjs,css}\" \"scripts/*.mjs\" \"website/**/*.{ts,tsx,mjs,cjs,css}\"",
+    "format:check": "prettier --check \"packages/{core,react,compiler,tests}/**/*.{ts,tsx,mjs,cts}\" \"benchmarks/**/*.{ts,tsx,mjs,css}\" \"scripts/*.mjs\" \"website/**/*.{ts,tsx,mjs,cjs,css}\"",
     "check:boundaries": "node scripts/check-boundaries.mjs && node --test scripts/check-boundaries.test.mjs",
     "test:load": "node scripts/production-load.mjs",
     "test:load:long": "node scripts/production-load.mjs --long",
@@ -40,7 +40,8 @@
     "docs:build": "npm run build && npm run build -w @kinstate/docs",
     "docs:preview": "npm run preview -w @kinstate/docs --",
     "docs:check": "npm run typecheck -w @kinstate/docs && node website/scripts/check-site.mjs",
-    "docs:test": "playwright test --config website/playwright.config.ts"
+    "docs:test": "playwright test --config website/playwright.config.ts",
+    "test:next:dev": "playwright test --config next-dev-tests/playwright.config.ts"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

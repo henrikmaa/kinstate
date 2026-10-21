@@ -2,6 +2,8 @@
 
 The compiler transforms authored `useService` consumers through explicit Babel paths. Its runtime protocol is the React package's internal render frame. No compiler module imports the runtime to perform a transformation.
 
+The Next.js adapter (`next.ts`) composes documented Webpack/Turbopack configuration. Its small CommonJS loader (`next-loader.cts`) calls the syntax-preserving transform in `next-transform.ts`; it does not install `next/babel` or replace SWC. Configuration and transformation are tested separately, and clean packed consumers exercise the emitted loader. Next owns TypeScript/JSX lowering, Server Component transforms and Fast Refresh.
+
 ## Pass order and mutation contracts
 
 | Stage | Owner | Inputs and effects |

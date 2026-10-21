@@ -3,22 +3,30 @@ import * as t from '@babel/types';
 import type { MutableComponentContext } from './context.js';
 import { skipNestedConsumer } from './ast.js';
 
+/** Type syntax and explicit parentheses do not change the referenced callable. */
+function wrappedExpression(node: t.Node): t.Expression | undefined {
+  if (
+    t.isTSAsExpression(node) ||
+    t.isTSNonNullExpression(node) ||
+    t.isTSTypeAssertion(node) ||
+    t.isTSSatisfiesExpression(node) ||
+    t.isTSInstantiationExpression(node) ||
+    t.isParenthesizedExpression(node)
+  )
+    return node.expression;
+}
+
 /** Service business methods are ordinary calls even when their names resemble hooks. */
 export function normalizeBusinessCalls(context: MutableComponentContext): void {
   const derivedRoot = (node: t.Node): boolean => {
     let root = node;
     while (true) {
       if (t.isMemberExpression(root) || t.isOptionalMemberExpression(root)) root = root.object;
-      else if (
-        t.isTSAsExpression(root) ||
-        t.isTSNonNullExpression(root) ||
-        t.isTSTypeAssertion(root) ||
-        t.isTSSatisfiesExpression(root) ||
-        t.isTSInstantiationExpression(root) ||
-        t.isParenthesizedExpression(root)
-      )
-        root = root.expression;
-      else break;
+      else {
+        const expression = wrappedExpression(root);
+        if (expression) root = expression;
+        else break;
+      }
     }
     return t.isIdentifier(root) && context.derivedBindings.has(root.name);
   };
@@ -27,7 +35,7 @@ export function normalizeBusinessCalls(context: MutableComponentContext): void {
     seen.add(path.node);
     if (path.isMemberExpression() || path.isOptionalMemberExpression())
       return derivedRoot(path.node);
-    if (path.isTSAsExpression() || path.isTSNonNullExpression() || path.isTSTypeAssertion())
+    if (wrappedExpression(path.node))
       return methodReference(path.get('expression') as NodePath, seen);
     if (path.isIdentifier()) {
       const binding = path.scope.getBinding(path.node.name);

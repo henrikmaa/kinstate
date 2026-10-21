@@ -79,17 +79,23 @@ hydrateRoot(container,
 
 The server's markup and client's initial values must match. Do not serialize proxies, classes, secrets, lifecycle handles, or arbitrary request objects. The caller owns JSON serialization and validation. Client providers apply initial state before reads and initialize resources after hydration commits.
 
-For Next.js App Router, keep service providers and consumers in a `'use client'` module. Server Components pass serializable initial data to that boundary; construct the `initialState` descriptor with its class token inside the client module and keep its identity stable. The example uses the Babel transformation with Next.js 16 Turbopack or webpack:
+For Next.js App Router, keep service providers and consumers in a `'use client'` module. Server Components pass serializable initial data to that boundary; construct the `initialState` descriptor with its class token inside the client module and keep its identity stable. The example uses the SWC-preserving adapter with Next.js 16 Turbopack or Webpack:
 
-```json
-{"presets":["next/babel"],"plugins":[["module:@kinstate/compiler",{"reactiveProps":"client"}]]}
+```js
+// next.config.mjs
+import { withKinstate } from '@kinstate/compiler/next';
+
+export default withKinstate({
+  transpilePackages: ['@kinstate/core', '@kinstate/react'],
+  reactStrictMode: true,
+});
 ```
 
 Run `next dev --turbopack` and `next build --turbopack`, or select the webpack scripts. The included Next configuration transpiles the runtime packages. Runtime infrastructure opts out of props-mode expansion with its module directive; source service consumers retain normal tracking.
 
 ## Package boundaries
 
-`@kinstate/core` has no React dependency. `@kinstate/react` depends on core and declares React as a peer. `@kinstate/compiler` provides Babel instrumentation and an optional Vite adapter. The `/internal` React export is a compiler/runtime protocol, not an application integration API; keep compiler and runtime versions aligned.
+`@kinstate/core` has no React dependency. `@kinstate/react` depends on core and declares React as a peer. `@kinstate/compiler` provides Babel instrumentation and optional Vite/Next adapters. The `/internal` React export is a compiler/runtime protocol, not an application integration API; keep compiler and runtime versions aligned.
 
 
 ## Receiving-component frames and collection graphs

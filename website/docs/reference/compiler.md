@@ -16,16 +16,23 @@ export default defineConfig({
 
 The adapter exports a default and named `kinstate` function, plus the `KinstateOptions` type. It runs before JSX lowering, preserves TypeScript syntax for Vite and returns source maps. Dependencies under `node_modules` are excluded; publish precompiled consuming components.
 
-## Babel
+## Next.js 16 (Webpack or Turbopack)
 
-```json
-{
-  "presets": ["next/babel"],
-  "plugins": [["module:@kinstate/compiler", { "reactiveProps": "client" }]]
-}
+```js
+// next.config.mjs
+import { withKinstate } from '@kinstate/compiler/next';
+
+export default withKinstate({
+  transpilePackages: ['@kinstate/core', '@kinstate/react'],
+  reactStrictMode: true,
+});
 ```
 
-The package root exports the Babel plugin as default and its `CompilerOptions` type. Retain your pipeline's JSX/TypeScript presets. `module:` prevents Babel's package-name normalization. The Next.js example verifies this configuration with Turbopack and webpack; an SWC plugin is not supplied.
+The `/next` adapter exports `withKinstate(config?, options?)`. It adds an instrumentation pre-loader, retains SWC, preserves existing bundler configuration, and defaults `reactiveProps` to `'client'`. Remove the old Kinstate Babel configuration; see [Next.js setup](../guide/nextjs-and-ssr.md). This adapter accepts object configuration; for a phase-based config, call it inside your exported config function.
+
+## Babel
+
+For existing Babel pipelines, retain your JSX/TypeScript presets and add `plugins: ['module:@kinstate/compiler']`. The package root exports the plugin and its `CompilerOptions` type. `module:` prevents Babel's package-name normalization.
 
 ## Options
 

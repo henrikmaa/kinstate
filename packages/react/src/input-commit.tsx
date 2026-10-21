@@ -21,6 +21,8 @@ export function InputCommit({
     // A first consumer may not have subscribed yet. A layout state update also
     // flushes its external-store consistency check before the browser paints.
     if (changed) refresh((version) => version + 1);
-  });
+    // The refresh belongs to this bridge, not a new provider commit. Reapplying
+    // the same snapshot here can loop if service logic reconciles an input.
+  }, [scope, inputs]);
   return null;
 }

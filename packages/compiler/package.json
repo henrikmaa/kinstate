@@ -20,6 +20,15 @@
       "types": "./dist/vite.d.ts",
       "import": "./dist/vite.js",
       "default": "./dist/vite.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js",
+      "default": "./dist/next.js"
+    },
+    "./next-loader": {
+      "types": "./dist/next-loader.d.cts",
+      "default": "./dist/next-loader.cjs"
     }
   },
   "scripts": {
@@ -33,10 +42,14 @@
     "@types/babel__core": "^7.20.5"
   },
   "peerDependencies": {
-    "vite": ">=5 <9"
+    "vite": ">=5 <9",
+    "next": ">=16 <17"
   },
   "peerDependenciesMeta": {
     "vite": {
+      "optional": true
+    },
+    "next": {
       "optional": true
     }
   },

@@ -29,8 +29,15 @@ test('Next.js request initial state hydrates and remains isolated', async ({ pag
   });
   await page.goto('http://127.0.0.1:4274');
   await expect(page.getByTestId('count')).toHaveText('7');
+  await expect(page.getByTestId('name-renders')).not.toHaveText('');
+  const nameRenders = await page.getByTestId('name-renders').textContent();
   await page.getByRole('button', { name: 'Increment', exact: true }).click();
   await expect(page.getByTestId('count')).toHaveText('8');
+  await expect(page.getByTestId('name-renders')).toHaveText(nameRenders!);
+  const countRenders = await page.getByTestId('count-renders').textContent();
+  await page.getByRole('button', { name: 'Rename', exact: true }).click();
+  await expect(page.getByTestId('name')).toHaveText('Renamed');
+  await expect(page.getByTestId('count-renders')).toHaveText(countRenders!);
   const second = await browser.newPage();
   try {
     await second.goto('http://127.0.0.1:4274');

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
@@ -14,6 +14,19 @@ try {
     for (const required of ['dist/index.js', 'dist/index.d.ts', 'LICENSE', 'README.md']) {
       if (!result.files.some((file) => file.path === required))
         throw new Error(`${name}: package missing ${required}`);
+    }
+    if (name === 'compiler') {
+      for (const required of [
+        'dist/next.js',
+        'dist/next.d.ts',
+        'dist/next-loader.cjs',
+        'dist/next-loader.d.cts',
+        'dist/next-loader.cjs.map',
+        'dist/next-transform.js',
+      ]) {
+        if (!result.files.some((file) => file.path === required))
+          throw new Error(`compiler: package missing ${required}`);
+      }
     }
     return join(temporary, result.filename);
   });
@@ -39,6 +52,7 @@ try {
         '@types/react-dom@^19',
         '@types/node@^22',
         'vite@^7',
+        ...(reactVersion.startsWith('19.') ? ['next@16.4.2'] : []),
       ],
       consumer,
     );
@@ -115,6 +129,45 @@ console.log('Packed imports, declarations, compiler, core, SSR and imported reac
 `,
     );
     console.log(run(process.execPath, ['smoke.mjs'], consumer).trim());
+    if (reactVersion.startsWith('19.')) {
+      // A real clean consumer catches missing loader files and workspace-only resolution.
+      // Keep Next's own tsconfig/declarations separate from the strict package check above.
+      const nextConsumer = join(consumer, 'next-app');
+      mkdirSync(nextConsumer);
+      writeFileSync(
+        join(nextConsumer, 'package.json'),
+        JSON.stringify({ private: true, type: 'module' }),
+      );
+      for (const file of ['app', 'next.config.mjs'])
+        cpSync(join(root, 'packages/examples/nextjs', file), join(nextConsumer, file), {
+          recursive: true,
+        });
+      writeFileSync(
+        join(nextConsumer, 'adapter-types.ts'),
+        `import type {NextConfig} from 'next'; import {withKinstate} from '@kinstate/compiler/next'; const config:NextConfig=withKinstate({compiler:{removeConsole:true}}); void config;`,
+      );
+      // Next supports legacy decorators; the instrumentation prepass must preserve them.
+      writeFileSync(
+        join(nextConsumer, 'tsconfig.json'),
+        JSON.stringify({ compilerOptions: { experimentalDecorators: true, strict: true } }),
+      );
+      writeFileSync(
+        join(nextConsumer, 'app/decorated.ts'),
+        'function entity(target: Function): void { void target; } @entity export class Model { count: number = 0; }',
+      );
+      const page = join(nextConsumer, 'app/page.tsx');
+      writeFileSync(page, "import './decorated';\n" + readFileSync(page, 'utf8'));
+      const build = run(
+        process.execPath,
+        [join(consumer, 'node_modules/next/dist/bin/next'), 'build', '--webpack'],
+        nextConsumer,
+      );
+      if (/disabled SWC|using external babel|\.babelrc/i.test(build))
+        throw new Error('Packed Next consumer unexpectedly disabled SWC');
+      console.log(
+        'Packed Next.js Webpack + SWC consumer (including next/font and decorators) built successfully.',
+      );
+    }
   }
 } catch (error) {
   if (error.stdout) console.error(String(error.stdout));

@@ -6,6 +6,8 @@
 
 Class-based reactive services with property-level React subscriptions. Service classes contain ordinary TypeScript business logic; React consumers call `useService(ServiceClass)`. The compiler is required to track reads made after that hook returns.
 
+Pre-release (`0.1.x`). See the [validation record](docs/VALIDATION.md) and [known boundaries](docs/LIMITATIONS.md) for the tested support contract.
+
 ```tsx
 import { Service } from '@kinstate/core';
 import { ServiceProvider, useService } from '@kinstate/react';
@@ -62,9 +64,23 @@ import kinstate from '@kinstate/compiler/vite';
 export default defineConfig({ plugins: [kinstate(), react()] });
 ```
 
+For Next.js 16, keep SWC enabled with the adapter (Webpack and Turbopack):
+
+```js
+// next.config.mjs
+import { withKinstate } from '@kinstate/compiler/next';
+
+export default withKinstate({
+  transpilePackages: ['@kinstate/core', '@kinstate/react'],
+  reactStrictMode: true,
+});
+```
+
+Remove any earlier Kinstate `.babelrc`/`next/babel` setup. See [Next.js and SSR](website/docs/guide/nextjs-and-ssr.md).
+
 For an existing Babel pipeline, add `module:@kinstate/compiler` to `plugins` while retaining your JSX and TypeScript presets. Compile every consumer, including tests. Calling an untransformed `useService` throws a setup error. Do not invoke the internal tracking hook yourself.
 
-Consumers must be synchronous named function components, or uppercase component bindings. Call `useService` directly in the component and assign its result to a local variable. Custom hooks and anonymous wrapper callbacks are not supported. Each consuming component should resolve its own service; see [compiler limitations](docs/LIMITATIONS.md) before passing reactive data through component props or memoization.
+Consumers must be synchronous function components, including supported React `memo`/`forwardRef` forms. Call `useService` directly in the component and assign its result to a local variable. Custom-hook consumption is diagnosed. Each consuming component should resolve its own service; see [compiler limitations](docs/LIMITATIONS.md) before passing reactive data through component props or memoization.
 
 ## Live inputs from any React state source
 

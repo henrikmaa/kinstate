@@ -2,26 +2,25 @@
 
 Server rendering needs request-local service ownership. Never put a mutable `ServiceScope` or service instance in a server module singleton. Each request constructs its own graph, and the client constructs a different graph from explicit initial data.
 
-The maintained Next.js 16 App Router example supports Babel instrumentation with Turbopack and webpack. It does not provide an SWC transform.
+The Next.js 16 App Router adapter supports Webpack and Turbopack while keeping Next's SWC compiler enabled.
 
 ## Configure client instrumentation
 
-```json
-{
-  "presets": ["next/babel"],
-  "plugins": [["module:@kinstate/compiler", { "reactiveProps": "client" }]]
-}
-```
-
-Keep `module:` in the Babel plugin name; it avoids Babel's automatic package-name rewriting. The example's Next configuration also transpiles the workspace packages:
-
 ```js
 // next.config.mjs
-export default {
+import { withKinstate } from '@kinstate/compiler/next';
+
+export default withKinstate({
   transpilePackages: ['@kinstate/core', '@kinstate/react'],
   reactStrictMode: true,
-};
+});
 ```
+
+Remove the Kinstate `.babelrc`/`next/babel` setup when moving to this adapter, then restart Next. Clear its generated `.next` cache if stale Babel diagnostics persist. A project-level Babel configuration still makes Next choose Babel. The adapter uses Babel internally for a syntax-preserving tracking prepass; Next's SWC then handles TypeScript, JSX, Server Components and Fast Refresh. This is not a native SWC plugin, and it does not need a version-coupled SWC WASM binary.
+
+`withKinstate` accepts a Next configuration object and optional compiler options as its second argument. It preserves existing Webpack hooks and Turbopack rules. The default `reactiveProps: 'client'` instruments receiving components in explicit `'use client'` modules. Published dependencies must be precompiled; files under `node_modules` are excluded.
+
+Run `next dev --webpack` / `next build --webpack` for Webpack, or use `--turbopack`. Next 16 is the currently verified major. The example includes `next/font/local`, so switching accidentally back to Babel fails its build.
 
 ## Send data across the boundary
 

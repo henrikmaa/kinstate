@@ -7,10 +7,16 @@ Enable receiving-component instrumentation once in the compiler setup:
 plugins: [kinstate({ reactiveProps: true }), react()]
 ```
 
-Next.js 16 can use its automatic Babel support with either Turbopack or webpack:
+Next.js 16 uses a syntax-preserving instrumentation prepass with either Turbopack or Webpack, retaining SWC:
 
-```json
-{"presets":["next/babel"],"plugins":[["module:@kinstate/compiler",{"reactiveProps":"client"}]]}
+```js
+// next.config.mjs
+import { withKinstate } from '@kinstate/compiler/next';
+
+export default withKinstate({
+  transpilePackages: ['@kinstate/core', '@kinstate/react'],
+  reactStrictMode: true,
+});
 ```
 
 In that mode, put `'use client'` in modules containing receiving components. Server Components remain outside props instrumentation. Functions and live service instances still cannot cross a Server Component serialization boundary.

@@ -10,7 +10,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
-import { Service, ServiceScope, dependencies, serviceInputs } from '@kinstate/core';
+import { Service, ServiceScope, dependencies, serviceInputs, observe } from '@kinstate/core';
 import { ServiceProvider, useService } from '@kinstate/react';
 
 afterEach(cleanup);
@@ -207,6 +207,80 @@ it('reasserts supplied input values on provider commits while preserving unbound
   expect(service.draft).toBe('keep');
   view.unmount();
   scope.dispose();
+});
+
+it('publishes each provider snapshot once when service reconciliation normalizes an input', async () => {
+  let service!: Normalized;
+  let initialized = 0;
+  let disposed = 0;
+  let reconciliations = 0;
+  class Resources {
+    stop: (() => void) | undefined;
+  }
+  class Normalized extends Service {
+    name = '';
+    draft = '';
+    private readonly resources = new Resources();
+    onInit() {
+      service = this;
+      initialized++;
+      this.resources.stop = observe(() => {
+        reconciliations++;
+        this.name = this.name.trim();
+      });
+    }
+    onDispose() {
+      disposed++;
+      this.resources.stop?.();
+      this.resources.stop = undefined;
+    }
+  }
+  function Display() {
+    const value = useService(Normalized);
+    return (
+      <span>
+        {value.name}:{value.draft}
+      </span>
+    );
+  }
+  const child = <Display />;
+  const tree = (name: string) => (
+    <StrictMode>
+      <ServiceProvider services={[serviceInputs(Normalized, { name })]}>{child}</ServiceProvider>
+    </StrictMode>
+  );
+  const view = render(tree('Ada'));
+  await act(async () => {
+    await Promise.resolve();
+  });
+  const original = service;
+  expect(initialized).toBe(1);
+  expect(reconciliations).toBe(1);
+
+  view.rerender(tree(' Ada '));
+  expect(screen.getByText('Ada:')).toBeTruthy();
+  // InputCommit's consistency refresh must not publish this same snapshot again.
+  expect(reconciliations).toBe(2);
+  expect(disposed).toBe(0);
+  await act(async () => {
+    service.name = 'local';
+    service.draft = 'keep';
+  });
+  expect(screen.getByText('local:keep')).toBeTruthy();
+  expect(reconciliations).toBe(3);
+
+  // An actual provider commit still reasserts its owner value, even if the
+  // caller's input value is Object.is-equal to the previous committed snapshot.
+  view.rerender(tree(' Ada '));
+  expect(screen.getByText('Ada:keep')).toBeTruthy();
+  expect(reconciliations).toBe(4);
+  expect(service).toBe(original);
+  expect(initialized).toBe(1);
+  view.unmount();
+  await act(async () => {
+    await Promise.resolve();
+  });
+  expect(disposed).toBe(1);
 });
 
 it('rejects duplicate service registrations including mixed input bindings', () => {

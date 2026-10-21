@@ -12,6 +12,8 @@ npx playwright install chromium
 npm run test:browser
 npm run build:webpack -w @kinstate/example-next
 npm run test:browser -- --grep Next.js
+npm run test:next:dev
+NEXT_TEST_BUNDLER=turbopack npm run test:next:dev
 npm run test:load:long
 npm run bench
 npm run bench:smoke

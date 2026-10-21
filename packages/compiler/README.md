@@ -12,7 +12,19 @@ import kinstate from '@kinstate/compiler/vite';
 export default defineConfig({ plugins: [kinstate(), react()] });
 ```
 
-For Babel, use `plugins: ['module:@kinstate/compiler']`; `module:` prevents Babel's automatic package-name rewriting. Next.js uses `presets: ['next/babel']` with this plugin. The included Next.js 16 App Router example uses Turbopack by default and also provides webpack scripts.
+For Babel, use `plugins: ['module:@kinstate/compiler']`; `module:` prevents Babel's automatic package-name rewriting. For Next.js 16, use the SWC-preserving adapter below with Webpack or Turbopack; remove any earlier Kinstate `next/babel` configuration.
+
+```js
+// next.config.mjs
+import { withKinstate } from '@kinstate/compiler/next';
+
+export default withKinstate({
+  transpilePackages: ['@kinstate/core', '@kinstate/react'],
+  reactStrictMode: true,
+});
+```
+
+The adapter accepts a Next configuration object, preserves existing bundler rules/hooks, and defaults `reactiveProps` to `'client'`. Pass optional compiler options as the second argument. For phase-based configs, call it inside your exported config function. Tracking is a Babel parser prepass that preserves TypeScript/JSX; Next's SWC remains responsible for its normal transforms. A project-level Babel config still makes Next use Babel; the adapter does not override Next's choice. This is not a native SWC WASM plugin. The maintained example includes `next/font/local` to catch accidental Babel fallback.
 
 Components keep their authored `useService(Class)` API. The transform adds a render-frame hook, captures synchronous reads and seals each return. It does not wrap components or use React internals. Generated code opts out of React Compiler memoization until interoperability is verified.
 
@@ -34,7 +46,7 @@ The characterization suite freezes complete generated code, source maps and diag
 
 ## Reactive component props
 
-Use `kinstate({ reactiveProps: true })` with Vite for ordinary client component modules. For Next.js, use `plugins: [['module:@kinstate/compiler', { reactiveProps: 'client' }]]` and mark receiving-component modules with `'use client'`. Both endpoints must be compiled against the same runtime package. This permits live objects and synchronous render callbacks to cross into compiled receivers, where actual reads are collected. Uncompiled third-party targets still require evaluated values.
+Use `kinstate({ reactiveProps: true })` with Vite for ordinary client component modules. For Next.js, use `withKinstate(nextConfig)` and mark receiving-component modules with `'use client'`. Both endpoints must be compiled against the same runtime package. This permits live objects and synchronous render callbacks to cross into compiled receivers, where actual reads are collected. Uncompiled third-party targets still require evaluated values.
 
 Props mode reserves PascalCase functions/default function exports for components. Move whole-parameter defaults/rest and lexical destructuring defaults into the function body, and use separate variable declarations for components. The module directive `'use no service tracking'` excludes infrastructure from props-mode discovery while explicit useService consumers remain tracked. Runtime packages carry this directive to prevent reinstrumentation by transpilePackages.
 

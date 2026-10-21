@@ -16,7 +16,7 @@ Call `useService` directly in a synchronous function component and assign its re
 
 Do not conceal reactive reads in React memoization or arbitrary escaped deferred helpers. Read primitive inputs before `useMemo`. A component return that crosses a `finally` block is diagnosed; return after the block or use a synchronous helper instead. Computed React namespace calls require direct named or dot access.
 
-Live props and synchronous render callbacks require compiled receiving components in `reactiveProps` mode. Uncompiled third-party receivers need evaluated primitives or plain projections. Mutable/member JSX targets, arbitrary HOCs and async render callbacks remain outside this supported boundary. Props mode reserves PascalCase function bindings and default function exports for components; some parameter defaults/rest forms need moving into the body.
+Live props and synchronous render callbacks require compiled receiving components in `reactiveProps` mode. Uncompiled third-party receivers need evaluated primitives or plain projections. Mutable/member JSX targets, arbitrary HOCs and async render callbacks remain outside this supported boundary. Props mode reserves PascalCase function bindings and default function exports for components; some parameter defaults/rest forms need moving into the body. Computed parameter keys that reference component parameters or body bindings are diagnosed because lowering them would change lexical scope; literal keys and unshadowed outer keys are supported.
 
 ## Lifetimes and external state
 

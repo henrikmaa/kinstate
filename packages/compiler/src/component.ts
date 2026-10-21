@@ -33,6 +33,33 @@ function isContextFreeDefault(node: t.Node): boolean {
   return false;
 }
 
+/** A body binding is not visible in the original parameter evaluation environment. */
+function validateComputedParameterKeys(parameter: NodePath, owner: NodePath<t.Function>): void {
+  parameter.traverse({
+    ObjectProperty(property) {
+      if (!property.node.computed) return;
+      const key = property.get('key');
+      const validate = (reference: NodePath<t.Identifier | t.JSXIdentifier>) => {
+        const bodyBinding = owner.scope.getOwnBinding(reference.node.name);
+        if (!bodyBinding) return;
+        const originalBinding = reference.scope.getBinding(reference.node.name);
+        // A closure declared inside the computed key retains its own local bindings.
+        if (
+          originalBinding &&
+          originalBinding.scope !== owner.scope &&
+          originalBinding.path.findParent((path) => path === key)
+        )
+          return;
+        throw reference.buildCodeFrameError(
+          'Computed component parameter keys cannot reference component parameters or body bindings. Move this destructuring into the component body to preserve parameter scope.',
+        );
+      };
+      if (key.isReferencedIdentifier()) validate(key);
+      key.traverse({ ReferencedIdentifier: validate });
+    },
+  });
+}
+
 /** Normalize a component and add the private frame argument to its service hooks. */
 export function prepareComponent(
   context: ProgramContext,
@@ -107,6 +134,7 @@ export function prepareComponent(
       const parameter = node.params[index]!;
       if (t.isIdentifier(parameter)) derivedBindings.add(parameter.name);
       else if (t.isObjectPattern(parameter) || t.isArrayPattern(parameter)) {
+        validateComputedParameterKeys((owner.get('params') as NodePath[])[index]!, owner);
         t.traverseFast(parameter, (candidate) => {
           if (t.isAssignmentPattern(candidate) && !isContextFreeDefault(candidate.right))
             throw owner.buildCodeFrameError(
