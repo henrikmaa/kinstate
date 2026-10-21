@@ -16,8 +16,8 @@ New regressions cover hook-shaped method aliases through `satisfies`/instantiati
 | Maintainability refactor | Public exports preserved; 32 compiler transformations/diagnostics matched the baseline before the subsequent correctness fixes; independent React/core boundary review passed |
 | Compiler maintenance | Explicit pass contracts and syntax ownership; 39 pre-refactor code/source-map/diagnostic characterizations match; independent review passed |
 | Architecture and formatting checks | Acyclic package graph, thin entry points, declared dependencies, locked formatting; 12 architecture fixture tests passed |
-| React 19.3.1 unit/compiler/integration tests | 432 passed |
-| React 18.3.1 unit/compiler/integration tests | 431 passed, Activity test skipped because that API is unavailable |
+| React 19.3.1 unit/compiler/integration tests | 451 passed |
+| React 18.3.1 unit/compiler/integration tests | 450 passed, Activity test skipped because that API is unavailable |
 | Real garbage-collection regression probes | Released observed keys reclaimed; captured dependencies and active observers retained; unreachable source graphs collected |
 | Sustained load | 900 scopes, 900,000 historical keys, 1,000 Strict Mode mount cycles; zero active observers, balanced lifecycle cleanup, 64,888 bytes retained growth over eight checkpoints |
 | Generated component Rules of Hooks lint | Passed for service consumers, anonymous wrappers and six receiving-component forms |
@@ -42,7 +42,7 @@ The recorded timing run uses five samples, two warmups and ten operations per sa
 
 The extended load artifact is [production-load-long.json](validation/production-load-long.json). It measures forced-GC retained heap, with explicit event-loop turns, not peak allocation or an interactive latency budget. It combines deterministic released-object/watcher assertions with a bounded heap-growth check. A real Zustand-backed input workflow also verifies rapid publications, React callback replacement and preserved local drafts after commit.
 
-The current framework suite contains 432 tests across the core, compiler, React integration and regressions. The recorded full benchmark contains 188 passing comparisons/940 samples using unchanged five-sample settings; the previous collection and full-array runs are archived separately for interpretation.
+The current framework suite contains 451 tests across the core, compiler, React integration and regressions. The recorded full benchmark contains 188 passing comparisons/940 samples using unchanged five-sample settings; the previous collection and full-array runs are archived separately for interpretation.
 
 Full-array regression tests cover persistent computed graph membership, dynamic and throwing branches, computed equality chains, writes during evaluation, detached lazy validation, public capture independence, earliest-version retention and repeated computed reads after writes. A foreign-proxy receiver regression preserves native get behavior. Shared handler methods and a weak canonical registry reduce allocation without introducing value caches or changing class identities.
 
@@ -59,3 +59,5 @@ Git distribution verification now covers real Git commits rather than only packe
 The latest production audit adds constructor projection/Memo regressions, genuine React dispatch provenance after service-derived initialization, weak consumer callback ownership, lazy readonly payload boundaries and symbol-keyed callback validation. In the real-GC regression, all 500 removed closures are collected while their source and consumer remain alive. Constructor reads update selectively; `useMemo` cannot hide them through an argument, a local class initializer or a class alias.
 
 The current extended load artifact is [production-hardening-load-2026-10-21.json](validation/production-hardening-load-2026-10-21.json): 900 scope cycles, 900,000 historical keys, 1,000 Strict Mode mount cycles, zero remaining observers, balanced initialization/disposal, and 55,320 bytes retained growth across eight forced-GC checkpoints (16 MiB budget). This is retained heap evidence, not peak allocation or comparative timing. The earlier load/benchmark artifacts remain historical records.
+
+The drawDB integration audit adds ten async/generator destructuring regressions and nine UI-library default-callback regressions. The complete package workflow passes on commit `a5f1942`, including Node 22/24 with both React majors, clean packed/Git consumers, Next.js SWC production/development checks, browser tests, load checks and benchmark adapter checks. The separate local drawDB migration passes 36 service/React tests, full lint, production build, and two production browser workflows covering editing, history, storage reload and cross-service entities/viewport controls. It retains the upstream AGPL license and is not bundled into Kinstate's MIT packages.
