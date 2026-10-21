@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
 import { Service, ServiceScope, serviceInputs } from '@kinstate/core';
 import { readonlyServiceValue } from '../react/src/service-view.js';
 import { assertComponentBoundary } from '../react/src/boundaries.js';
@@ -111,6 +112,64 @@ describe('component boundary validation', () => {
     );
     Object.defineProperty(format, Symbol('load'), { value: load });
     expect(() => frame.boundary({ format }, 'value', receiver)).toThrow(/synchronous/);
+  });
+
+  it('does not traverse renderer ownership or ref graphs on React elements', () => {
+    let enumerations = 0;
+    const bookkeeping = new Proxy(
+      {},
+      {
+        ownKeys() {
+          enumerations++;
+          throw new Error('Renderer bookkeeping is not component data');
+        },
+      },
+    );
+    const element = {
+      ...createElement('span', { children: 'value', ref: { current: bookkeeping } }),
+      _owner: bookkeeping,
+      _debugInfo: bookkeeping,
+      type: bookkeeping,
+    };
+    const frame = new RenderFrame();
+    expect(frame.boundary([element, new Map([['child', element]])], 'value', receiver)).toEqual([
+      element,
+      new Map([['child', element]]),
+    ]);
+    expect(enumerations).toBe(0);
+  });
+
+  it('still validates deferred callbacks in nested React element props', () => {
+    const frame = new RenderFrame();
+    const load = frame.callback(
+      async () => 'value',
+      () => [],
+      true,
+      true,
+    );
+    const Child = markReactiveComponent((_props: { config: object }) => null);
+    const element = createElement(
+      'section',
+      null,
+      createElement(Child, { config: { [Symbol('load')]: load } }),
+    );
+    expect(() => frame.boundary(element, 'value', receiver)).toThrow(/synchronous/);
+  });
+
+  it('keeps element branding getters inert and terminates cyclic props', () => {
+    let reads = 0;
+    const value = {
+      get $$typeof() {
+        reads++;
+        return Symbol.for('react.element');
+      },
+    };
+    const config: { self?: unknown } = {};
+    const element = createElement('span', { config });
+    config.self = element;
+    const frame = new RenderFrame();
+    expect(() => frame.boundary([value, element], 'value', receiver)).not.toThrow();
+    expect(reads).toBe(0);
   });
 
   it('validates symbol metadata on certified snapshot callbacks', () => {

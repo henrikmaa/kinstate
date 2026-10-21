@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- Fixed severe drawDB drag latency caused by callback validation traversing React element ownership graphs. Validate rendered props only, keep refs imperative, and retain nested callback safety checks without application memoization workarounds.
+
 - Fixed integration defects found by migrating drawDB: preserve async/generator destructuring execution context, diagnose suspended pattern defaults/keys, and accept React-injected vendor function defaults through exact descriptor provenance without weakening authored callback guards.
 
 - Closed production audit defects: track constructor projection reads; recognize React state/reducer dispatch initialized from service data; release removed callback closures from consumer caches; keep borrowed payload validation lazy; validate symbol-keyed callback metadata and readonly native props correctly.

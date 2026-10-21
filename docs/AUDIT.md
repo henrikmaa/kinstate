@@ -1,11 +1,12 @@
 # Production hardening record
 
-Updated 2026-10-20. This records verified fixes and explicit remaining boundaries; a passing suite does not imply support for arbitrary JavaScript or React patterns.
+Updated 2026-10-21. This records verified fixes and explicit remaining boundaries; a passing suite does not imply support for arbitrary JavaScript or React patterns.
 
 ## Correctness fixes
 
 | Finding | Resolution | Evidence |
 | --- | --- | --- |
+| Validating React element children traversed development owner/Fiber graphs, causing severe drag latency in drawDB | Recognize elements with guarded public React branding and inspect their rendered props only; exclude renderer bookkeeping and imperative refs while retaining nested callback checks | Real Chromium CPU profile localized the regression to `assertDeferredCaptures` in sortable children; owner/ref traversal traps, nested async callback, branding getter and cyclic-prop regressions pass on React 18 and 19 |
 | Locally caught render errors discarded dependencies and could leave fallback UI stuck | Publish synchronous reads to the render attempt even when getters/helpers throw, preserving earliest-version validation and independent nested collectors | Getter/method fallback recovery render counters, falsy thrown values, subscription race and collector restoration tests |
 | Capturing function declarations escaped default-mode render-callback checks | Apply declaration dependency analysis in every compiler mode; retain compiled receiver ownership and ordinary command/local-helper support | Compiler escape/alias/transitive-helper fixtures and selective compiled receiver regression |
 | Failed activation cleanup could resurrect resources or recursively destroy dependencies | Guard cleanup against service activation/construction and premature terminal disposal while allowing reads of existing dependencies; restore guards after cleanup errors | Failed-init, rollback reentrancy, dependent cleanup ordering and running dependency recovery tests |

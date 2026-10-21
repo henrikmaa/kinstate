@@ -1,5 +1,6 @@
 import { isReactive } from '@kinstate/core';
 import { unwrapReadonlyView } from '@kinstate/core/internal';
+import { isValidElement } from 'react';
 
 const callbackCaptures = new WeakMap<
   Function,
@@ -58,6 +59,23 @@ export function assertDeferredCaptures(value: unknown, visited = new WeakSet<obj
   // and cannot brand-check native Map/Set proxies. Inspect authored config only.
   if (isReactive(value) || unwrapReadonlyView(value) !== value) return;
   const descriptors = Object.getOwnPropertyDescriptors(value);
+  // React elements carry renderer-owned bookkeeping (and, in development,
+  // references to the entire owner tree). Only props cross the rendering
+  // boundary. Do not traverse element types, owners, refs, or debug metadata.
+  // Guard branding before the public predicate so authored getters stay inert.
+  const branding = descriptors.$$typeof;
+  if (branding && 'value' in branding && isValidElement(value)) {
+    const props = descriptors.props;
+    if (props && 'value' in props && props.value !== null && typeof props.value === 'object') {
+      const fields = Object.getOwnPropertyDescriptors(props.value);
+      for (const key of Reflect.ownKeys(fields)) {
+        if (key === 'key' || key === 'ref') continue;
+        const field = Reflect.get(fields, key) as PropertyDescriptor;
+        if ('value' in field) assertDeferredCaptures(field.value, visited);
+      }
+    }
+    return;
+  }
   for (const key of Reflect.ownKeys(descriptors)) {
     const field = Reflect.get(descriptors, key) as PropertyDescriptor;
     if ('value' in field) assertDeferredCaptures(field.value, visited);
