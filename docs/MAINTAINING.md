@@ -27,7 +27,7 @@ The public API is defined by each package entry point. Runtime implementation mo
 | compiler | `analysis.ts` | Ordered binding analysis, validation and boundary rewriting |
 | compiler | `binding-analysis.ts`, `service-validation.ts` | Fixed-point binding discovery and read-only service/memo diagnostics |
 | compiler | `business-calls.ts` | Hook-shaped service method normalization with binding-aware alias handling |
-| compiler | `component-boundaries.ts`, `react-calls.ts`, `callback-analysis.ts` | JSX/factory guards, import-aware React recognition and deferred-callback diagnostics |
+| compiler | `component-boundaries.ts`, `boundary-callbacks.ts`, `react-calls.ts`, `callback-analysis.ts` | JSX/factory guards, callback capture certificates, import-aware React recognition and deferred-callback diagnostics |
 | compiler | `prop-components.ts`, `wrapper-components.ts` | Optional receiving-component discovery and private identity registration |
 | compiler | `instrumentation.ts`, `read-collection.ts` | Syntax visitor policy, synchronous read wrapping and receiver/chain semantics |
 | compiler | `patterns.ts`, `iteration.ts` | Destructuring collection, loop-header safety and scope-preserving lowering |

@@ -63,6 +63,33 @@ export function collectDerivedBindings(context: MutableComponentContext): void {
             }
           }
       },
+      'CallExpression|OptionalCallExpression'(path) {
+        if (!(path.isCallExpression() || path.isOptionalCallExpression())) return;
+        // Calls may store a derived argument in another argument or receiver
+        // (push/splice, Object.assign, or a user helper). Carry provenance to
+        // component-local aliases without claiming to know the callee's effects.
+        const arguments_ = path.get('arguments') as NodePath[];
+        if (!arguments_.some((argument) => referencesDerived(argument, context))) return;
+        const taint = (reference: NodePath<t.Identifier | t.JSXIdentifier>) => {
+          const binding = reference.scope.getBinding(reference.node.name);
+          let scope = binding?.scope;
+          while (scope && scope !== owner.scope) scope = scope.parent;
+          if (!scope || derivedBindings.has(reference.node.name)) return;
+          derivedBindings.add(reference.node.name);
+          derivedChanged = true;
+        };
+        const callee = path.get('callee') as NodePath;
+        if (callee.isMemberExpression() || callee.isOptionalMemberExpression()) {
+          let receiver = callee.get('object') as NodePath;
+          while (receiver.isMemberExpression() || receiver.isOptionalMemberExpression())
+            receiver = receiver.get('object') as NodePath;
+          if (receiver.isReferencedIdentifier()) taint(receiver);
+        }
+        for (const argument of arguments_) {
+          if (argument.isReferencedIdentifier()) taint(argument);
+          argument.traverse({ ReferencedIdentifier: taint });
+        }
+      },
       AssignmentExpression(path) {
         const right = path.get('right');
         let derived = right.isIdentifier() && derivedBindings.has(right.node.name);

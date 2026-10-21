@@ -131,7 +131,11 @@ for(const [filename, code] of Object.entries(modules)) {
 }
 const propsHtml=(await import('./compiled-props.mjs')).html;
 assert.match(propsHtml,/Packed/);assert.match(propsHtml,/7/);
-console.log('Packed imports, declarations, compiler, core, SSR and imported reactive receivers passed.');
+writeFileSync(new URL('./uncompiled-chart.mjs',import.meta.url),\`import React from 'react';export function Chart({options}){return React.createElement('span',null,options.formatter(2))}\`);
+const snapshotSource=\`import React from 'react';import {renderToString} from 'react-dom/server';import {Service} from '@kinstate/core';import {ServiceProvider,useService} from '@kinstate/react';import {Chart} from './uncompiled-chart.mjs';class State extends Service {currency='USD ';title='Chart'}function Parent(){const state=useService(State);const currency=state.currency;const options={title:state.title,formatter:n=>currency+n};return React.createElement(Chart,{options})}export const html=renderToString(React.createElement(ServiceProvider,{services:[State]},React.createElement(Parent)));\`;
+writeFileSync(new URL('./compiled-snapshots.mjs',import.meta.url),transformSync(snapshotSource,{filename:'snapshots.js',configFile:false,babelrc:false,plugins:[compiler]}).code);
+assert.match((await import('./compiled-snapshots.mjs')).html,/USD 2/);
+console.log('Packed imports, declarations, compiler, core, SSR, imported reactive receivers and third-party snapshot callbacks passed.');
 `,
     );
     console.log(run(process.execPath, ['smoke.mjs'], consumer).trim());

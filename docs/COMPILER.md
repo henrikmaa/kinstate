@@ -24,6 +24,7 @@ The orchestrator intentionally says `analyzeAndGuardComponent`: this stage inclu
 
 ## Syntax ownership
 
+- `boundary-callbacks.ts` certifies individual callbacks using lexical captures, without replacing callback identities or executing their bodies. The React runtime owns weak certificates and primitive-capture checks in `callback-boundaries.ts`. Unknown derived factories, mutable captures and shadowed declaration captures remain guarded. Deferred callback validation also applies to compiled receivers.
 - `react-calls.ts` owns recognition of supported React hooks, component wrappers and element factories. Keep import-alias policy consistent with `imports.ts`.
 - `business-calls.ts` normalizes Hook-shaped service method names before validation/instrumentation. Actual React import bindings must retain their Hook semantics; an ordinary service method must still collect synchronous reads.
 - `ast.ts` contains shared predicates for nested consumers, hook-shaped calls and write targets.

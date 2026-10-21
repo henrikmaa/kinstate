@@ -5,6 +5,7 @@ import type { ComponentContext } from './context.js';
 import { referencesDerived } from './binding-analysis.js';
 import { isElementFactory, isKnownReactHook } from './react-calls.js';
 import { hasAsynchronousCallback } from './callback-analysis.js';
+import { certifyBoundaryCallbacks } from './boundary-callbacks.js';
 
 /** A receiver is evaluated twice by JSX lowering; only immutable lexical bindings are safe. */
 function stableReceiver(path: NodePath, context: ComponentContext): t.Identifier | undefined {
@@ -23,11 +24,14 @@ function guardBoundary(
   receiver?: t.Expression,
 ): void {
   if (!path.isExpression() || !referencesDerived(path, context)) return;
-  if (receiver && kind === 'value' && hasAsynchronousCallback(path, context))
+  const deferred = isDeferredCallback(path, context);
+  const asynchronous = hasAsynchronousCallback(path, context);
+  const certified = kind === 'value' && certifyBoundaryCallbacks(path, context);
+  if (receiver && kind === 'value' && asynchronous && !certified)
     throw path.buildCodeFrameError(
       'Reactive render callbacks must be synchronous; asynchronous work belongs in service methods or command callbacks.',
     );
-  if (kind === 'value' && !receiver && isDeferredCallback(path, context))
+  if (kind === 'value' && !receiver && deferred && !certified)
     throw path.buildCodeFrameError(
       'Reactive render-prop callbacks cannot cross component props or JSX children. Call useService in the component that renders the value; on* command callbacks are supported.',
     );

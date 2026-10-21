@@ -1,6 +1,11 @@
 import { isReactive, Service } from '@kinstate/core';
 import { isValidElement } from 'react';
 import { isReactiveComponent } from './component-tracking.js';
+import {
+  getCallbackCertificate,
+  assertDeferredCaptures,
+  assertSnapshotCaptures,
+} from './callback-boundaries.js';
 
 export type BoundaryKind = 'value' | 'command' | 'ref';
 
@@ -27,7 +32,10 @@ export function assertComponentBoundary(
   kind: BoundaryKind,
   receiver?: unknown,
 ): void {
-  if (kind === 'value' && isReactiveComponent(receiver)) return;
+  if (kind === 'value' && isReactiveComponent(receiver)) {
+    assertDeferredCaptures(value);
+    return;
+  }
   if (kind === 'ref') return assertRef(value);
   if (kind === 'command') {
     if (value == null || typeof value === 'function') return;
@@ -46,8 +54,26 @@ export function assertComponentBoundary(
           Object.prototype.isPrototypeOf.call(Service.prototype, prototype.value))
       )
         return;
+      if (visited.has(current)) return;
+      const captures = getCallbackCertificate(current);
+      if (captures) {
+        if (captures.blocked)
+          throw new TypeError(
+            'Reactive render callbacks must be synchronous; asynchronous work belongs in service methods or command callbacks.',
+          );
+        visited.add(current);
+        assertSnapshotCaptures(captures.read());
+        for (const field of Object.values(Object.getOwnPropertyDescriptors(current))) {
+          if (!('value' in field))
+            throw new TypeError(
+              'Reactive callback properties must use data properties, not getters.',
+            );
+          visit(field.value);
+        }
+        return;
+      }
       throw new TypeError(
-        'Reactive render callbacks cannot cross component boundaries. Use an on* command prop for events, or resolve useService in the rendering component.',
+        'Reactive render callbacks cannot cross component boundaries without safe snapshot captures. Capture evaluated primitive values for formatters, use an on* command prop for live events, or resolve useService in the rendering component.',
       );
     }
     if (current === null || typeof current !== 'object') return;

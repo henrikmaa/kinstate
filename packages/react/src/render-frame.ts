@@ -1,5 +1,6 @@
 import { collectDependencies, type Dependency } from '@kinstate/core';
 import { assertComponentBoundary, type BoundaryKind } from './boundaries.js';
+import { certifyBoundaryCallback } from './callback-boundaries.js';
 
 type Snapshot = Readonly<{ revision: number }>;
 
@@ -22,6 +23,12 @@ export class RenderFrame {
   /** Compiler boundary for already evaluated custom-component values and commands. */
   boundary<T>(value: T, kind: BoundaryKind, receiver?: unknown): T {
     assertComponentBoundary(value, kind, receiver);
+    return value;
+  }
+
+  /** Identity-preserving certificate for compiler-proven callback captures. */
+  callback<T>(value: T, captures: () => readonly unknown[], mandatory = false, blocked = false): T {
+    certifyBoundaryCallback(value, captures, mandatory, blocked);
     return value;
   }
 

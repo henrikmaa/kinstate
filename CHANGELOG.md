@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- Relaxed third-party callback boundaries for primitive snapshot formatters and unrelated hook callbacks inside service-derived chart/table options. Preserved identities and method receivers, with conservative live/mutable capture guards and async/declaration-shadow regressions.
+
 - Made React service consumers readonly: getter/nested state and arrays require service commands for mutation, with runtime protection for reflection, callbacks and async method results. Consumer views are stable and distinct from mutable core instances; command argument normalization and optimized array tracking preserve core ownership.
 - Added SWC-preserving Next.js Webpack/Turbopack integration, fixed method-alias tracking and computed parameter-key scope, and stopped normalized input refresh loops.
 
