@@ -402,7 +402,7 @@
     "source": "import { useService } from '@react-service/react';\nimport React, {memo, forwardRef, useMemo, useCallback, useEffect, createElement as element} from 'react';\nfunction View(){const s=useService(S);return element(Widget,{...s.options,label:s.name});}",
     "expected": {
       "kind": "output",
-      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => element(Widget, _serviceFrame.track(() => ({\n    ..._serviceFrame.boundary(_serviceFrame.track(() => s.options), \"value\"),\n    label: _serviceFrame.boundary(_serviceFrame.track(() => s.name), \"value\")\n  })))));\n  _serviceFrame.finish(undefined);\n}",
+      "code": "import { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from '@react-service/react';\nimport React, { memo, forwardRef, useMemo, useCallback, useEffect, createElement as element } from 'react';\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame = useReactive_renderFrame();\n  const s = useService(S, _serviceFrame);\n  return _serviceFrame.finish(_serviceFrame.track(() => element(Widget, _serviceFrame.track(() => ({\n    ..._serviceFrame.boundary(_serviceFrame.track(() => s.options), \"props\"),\n    label: _serviceFrame.boundary(_serviceFrame.track(() => s.name), \"value\")\n  })))));\n  _serviceFrame.finish(undefined);\n}",
       "map": {
         "version": 3,
         "names": [
@@ -1114,16 +1114,17 @@
     "source": "\"use client\";\nimport {useService} from \"@react-service/react\";\nconst _serviceFrame=1;function View(){const useReactive_renderFrame=2;const s=useService(S);return s.count+_serviceFrame+useReactive_renderFrame;}",
     "expected": {
       "kind": "output",
-      "code": "\"use client\";\n\nimport { useRenderFrame as useReactive_renderFrame } from \"@react-service/react/internal\";\nimport { useService } from \"@react-service/react\";\nconst _serviceFrame = 1;\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame2 = useReactive_renderFrame();\n  const useReactive_renderFrame = 2;\n  const s = useService(S, _serviceFrame2);\n  return _serviceFrame2.finish(_serviceFrame2.track(() => s.count) + _serviceFrame + useReactive_renderFrame);\n  _serviceFrame2.finish(undefined);\n}",
+      "code": "\"use client\";\n\nimport { useRenderFrame as useReactive_renderFrame2 } from \"@react-service/react/internal\";\nimport { useService } from \"@react-service/react\";\nconst _serviceFrame = 1;\nfunction View() {\n  \"use no memo\";\n\n  const _serviceFrame2 = useReactive_renderFrame2();\n  const useReactive_renderFrame = 2;\n  const s = useService(S, _serviceFrame2);\n  return _serviceFrame2.finish(_serviceFrame2.track(() => s.count) + _serviceFrame + useReactive_renderFrame);\n  _serviceFrame2.finish(undefined);\n}",
       "map": {
         "version": 3,
         "names": [
           "useRenderFrame",
-          "useReactive_renderFrame",
+          "useReactive_renderFrame2",
           "useService",
           "_serviceFrame",
           "View",
           "_serviceFrame2",
+          "useReactive_renderFrame",
           "s",
           "S",
           "finish",
@@ -1137,7 +1138,7 @@
         "sourcesContent": [
           "\"use client\";\nimport {useService} from \"@react-service/react\";\nconst _serviceFrame=1;function View(){const useReactive_renderFrame=2;const s=useService(S);return s.count+_serviceFrame+useReactive_renderFrame;}"
         ],
-        "mappings": "AAAA,YAAY;;AAAC,SAAAA,cAAA,IAAAC,uBAAA;AACb,SAAQC,UAAU,QAAO,sBAAsB;AAC/C,MAAMC,aAAa,GAAC,CAAC;AAAC,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,cAAA,GAAAJ,uBAAA;EAAC,MAAMA,uBAAuB,GAAC,CAAC;EAAC,MAAMK,CAAC,GAACJ,UAAU,CAACK,CAAC,EAAAF,cAAA,CAAC;EAAC,OAAAA,cAAA,CAAAG,MAAA,CAAOH,cAAA,CAAAI,KAAA,OAAAH,CAAC,CAACI,KAAK,IAACP,aAAa,GAACF,uBAAuB;EAACI,cAAA,CAAAG,MAAA,CAAAG,SAAA;AAAA",
+        "mappings": "AAAA,YAAY;;AAAC,SAAAA,cAAA,IAAAC,wBAAA;AACb,SAAQC,UAAU,QAAO,sBAAsB;AAC/C,MAAMC,aAAa,GAAC,CAAC;AAAC,SAASC,IAAIA,CAAA,EAAE;EAAA;;EAAA,MAAAC,cAAA,GAAAJ,wBAAA;EAAC,MAAMK,uBAAuB,GAAC,CAAC;EAAC,MAAMC,CAAC,GAACL,UAAU,CAACM,CAAC,EAAAH,cAAA,CAAC;EAAC,OAAAA,cAAA,CAAAI,MAAA,CAAOJ,cAAA,CAAAK,KAAA,OAAAH,CAAC,CAACI,KAAK,IAACR,aAAa,GAACG,uBAAuB;EAACD,cAAA,CAAAI,MAAA,CAAAG,SAAA;AAAA",
         "ignoreList": []
       }
     }

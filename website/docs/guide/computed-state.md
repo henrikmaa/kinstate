@@ -46,11 +46,12 @@ A getter backed only by a JavaScript `#private` slot cannot observe changes to t
 
 ## Use memoization at the right boundary
 
-You do not need React `useMemo` around a service getter. The compiler diagnoses memoization that conceals reactive reads. If React memoization is useful for presentation, read primitive inputs first:
+You do not need React `useMemo` around a service getter: its computed cache is shared by service consumers. When presentation needs a component-local cache, enable `reactiveProps: true` for client source or `'client'` for marked client modules and keep ordinary React memoization:
 
 ```tsx
-const total = cart.total;
-const label = useMemo(() => formatCurrency(total), [total]);
+const label = useMemo(() => formatCurrency(cart.total, locale), [cart, locale]);
 ```
 
-Here `useMemo` and `formatCurrency` are application imports; the service read happens outside the callback. Large collection getters still perform collection work when invalidated. Caching does not make sorting 50,000 reactive rows constant-time. See [performance](performance.md).
+Here `useMemo` comes from React and `formatCurrency` is an application function. The compiler records the factory's observable reads, retains their subscriptions on cache hits, and invalidates the memo when those reads change. Include ordinary React inputs such as `locale` in the dependency array. Keep the factory synchronous and pure; React may still evict caches. In legacy compiler mode (`reactiveProps: false`), concealed reactive reads remain diagnosed.
+
+Large collection getters and memo factories still perform collection work when invalidated. Caching does not make sorting 50,000 reactive rows constant-time. See [performance](performance.md).

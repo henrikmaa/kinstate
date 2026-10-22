@@ -32,6 +32,7 @@ export function isKnownReactHook(
   if (t.isIdentifier(callee)) return names.has(callee.name);
   return (
     t.isMemberExpression(callee) &&
+    !callee.computed &&
     t.isIdentifier(callee.object) &&
     imports.reactNamespaces.has(callee.object.name) &&
     t.isIdentifier(callee.property) &&

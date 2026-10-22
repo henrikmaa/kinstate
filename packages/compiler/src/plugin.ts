@@ -6,6 +6,7 @@ import { analyzeAndGuardComponent } from './analysis.js';
 import { instrumentComponent } from './instrumentation.js';
 import { markComponent } from './prop-components.js';
 import { collectImports } from './imports.js';
+import { hasReactModuleEvidence } from './react-module.js';
 import { discoverReceiverWrappers, registerReceiverWrappers } from './wrapper-components.js';
 
 export interface CompilerOptions {
@@ -26,6 +27,7 @@ export default function kinstatePlugin(_api: unknown, options: CompilerOptions =
         const filename = state.file.opts.filename;
         if (filename && /(?:^|[\\/])node_modules(?:[\\/]|$)/.test(filename)) return;
         const reactiveProps =
+          hasReactModuleEvidence(program, filename, source) &&
           !program.node.directives.some((d) => d.value.value === 'use no service tracking') &&
           (options.reactiveProps === true ||
             (options.reactiveProps === 'client' &&
@@ -48,6 +50,15 @@ export default function kinstatePlugin(_api: unknown, options: CompilerOptions =
           );
           return;
         }
+        // Prefixing Babel-generated names can create a new collision, including
+        // with bindings in nested component scopes that program.hasBinding misses.
+        const hasIdentifier = (name: string): boolean => {
+          let found = false;
+          t.traverseFast(program.node, (node) => {
+            if (t.isIdentifier(node, { name })) found = true;
+          });
+          return found;
+        };
         let frameHook: t.Identifier;
         do {
           frameHook = t.identifier(
@@ -55,9 +66,21 @@ export default function kinstatePlugin(_api: unknown, options: CompilerOptions =
           );
         } while (
           program.scope.hasBinding(frameHook.name) ||
-          program.scope.hasGlobal(frameHook.name)
+          program.scope.hasGlobal(frameHook.name) ||
+          hasIdentifier(frameHook.name)
         );
 
+        let memoHook: t.Identifier;
+        do {
+          memoHook = t.identifier(
+            `useReactive${program.scope.generateUidIdentifier('serviceMemo').name}`,
+          );
+        } while (
+          program.scope.hasBinding(memoHook.name) ||
+          program.scope.hasGlobal(memoHook.name) ||
+          hasIdentifier(memoHook.name)
+        );
+        let memoUsed = false;
         const marker = reactiveProps
           ? program.scope.generateUidIdentifier('markReactiveComponent')
           : undefined;
@@ -66,7 +89,7 @@ export default function kinstatePlugin(_api: unknown, options: CompilerOptions =
         // keeping nested consumers isolated and generated identifiers deterministic.
         for (const [owner, calls] of context.owners) {
           const component = prepareComponent(context, owner, calls);
-          analyzeAndGuardComponent(component);
+          memoUsed = analyzeAndGuardComponent(component, memoHook) || memoUsed;
           instrumentComponent(component, frameHook);
           if (marker) markComponent(owner, context.imports, marker);
         }
@@ -74,6 +97,7 @@ export default function kinstatePlugin(_api: unknown, options: CompilerOptions =
           t.importDeclaration(
             [
               t.importSpecifier(frameHook, t.identifier('useRenderFrame')),
+              ...(memoUsed ? [t.importSpecifier(memoHook, t.identifier('useServiceMemo'))] : []),
               ...(marker ? [t.importSpecifier(marker, t.identifier('markReactiveComponent'))] : []),
               ...(wrapperMarker
                 ? [t.importSpecifier(wrapperMarker, t.identifier('markReactiveWrapper'))]

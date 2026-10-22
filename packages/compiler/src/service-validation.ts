@@ -71,16 +71,24 @@ export function validateServiceReferences(context: ComponentContext): void {
 export function validateMemoCall(
   path: NodePath<t.CallExpression>,
   context: ComponentContext,
-): void {
+  memoHook?: t.Identifier,
+): boolean {
   const { serviceBindings, derivedBindings } = context;
   const callee = path.node.callee;
   if (
     !isKnownReactHook(callee, context, 'memo', path.scope) ||
     isKnownReactHook(callee, context, 'callback', path.scope)
   )
-    return;
+    return false;
   const callback = path.get('arguments')[0];
-  if (!callback) return;
+  if (!callback) return false;
+  // Receiving components may contain either plain props or live service views.
+  // A tracked memo preserves caching for both and replays cached dependencies.
+  if (context.program.reactiveProps && memoHook) {
+    path.node.callee = t.cloneNode(memoHook);
+    path.node.arguments.unshift(t.cloneNode(context.frame));
+    return true;
+  }
   let readsService = callback.isIdentifier() && derivedBindings.has(callback.node.name);
   callback.traverse({
     ReferencedIdentifier(ref) {
@@ -110,4 +118,5 @@ export function validateMemoCall(
     throw path.buildCodeFrameError(
       'useMemo must not hide reactive service reads. Read the required primitive values before the hook and include them in its dependencies.',
     );
+  return false;
 }

@@ -23,12 +23,12 @@ describe('reactive receiver compiler contract', () => {
     expect(code).toContain('use no memo');
     expect(code).toMatch(/\.track\(\(\) => row\.name\)/);
   });
-  it('retains memoization diagnostics for concealed prop reads', () => {
-    expect(() =>
+  it('replays memoized prop reads through the internal tracked hook', () => {
+    expect(
       compile(
         "import {useMemo} from 'react';function Child({row}){return useMemo(()=>row.name,[])}",
       ),
-    ).toThrow(/must not hide/);
+    ).toContain('useServiceMemo');
   });
   it.each([
     'function Child({row}={}){return row.name}',

@@ -50,6 +50,17 @@ function Content({ children }: { children: () => React.ReactNode }) {
 
 `Content` collects the callback's reads when it invokes the callback during rendering. Calling an event command after rendering does not add rendering dependencies. Conditional reads replace subscriptions on commit, and abandoned renders cannot replace committed dependencies. No global component render state is introduced.
 
+## Memoized presentation
+
+In receiving-component mode, keep ordinary imported React memoization when a component needs its own presentation cache:
+
+```tsx
+const service = useService(UsersService);
+const label = useMemo(() => formatUser(service.selectedUser, locale), [service, locale]);
+```
+
+Observable reads performed synchronously by the factory remain dependencies even on cache hits. Changing an observed field invalidates the memo; changing ordinary React inputs follows its authored dependency array. Factories stay synchronous and pure. No new public wrapper is required. A service getter remains preferable for derived business state shared across consumers. Legacy mode without receiving-component instrumentation retains its memo diagnostics.
+
 ## Boundaries that remain explicit
 
 Only instrumented receivers can consume live reactive values this way. For an uncompiled third-party component, pass evaluated primitives/plain projections or resolve the service in a compiled child that performs those reads. A guard rejects unsafe escapes rather than silently observing the entire service or cloning it. Library authors can precompile receiving components; keep compiler/runtime versions aligned and avoid duplicate runtime installations.

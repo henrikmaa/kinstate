@@ -15,7 +15,7 @@ The Next.js adapter (`next.ts`) composes documented Webpack/Turbopack configurat
 | Business-call normalization | `business-calls.ts` | Distinguishes service methods from Hooks when their names resemble Hooks. Preserves member receivers and evaluation order; updates binding facts when renaming local method aliases. |
 | Service validation | `service-validation.ts` | Checks reassignment and service reference escapes. Reads completed binding facts. |
 | JSX guards | `component-boundaries.ts` | Installs guards on custom attributes, then checks nested captures and guards children in a second traversal. |
-| Call guards and validation | `analysis.ts` | In one traversal, installs factory guards before validating memo calls. Keeping these operations interleaved preserves traversal behavior and diagnostic precedence. |
+| Call guards and validation | `analysis.ts` | In one traversal, installs factory guards before validating or rewriting memo calls. Keeping these operations interleaved preserves traversal behavior and diagnostic precedence. |
 | Read instrumentation | `instrumentation.ts` | Uses exit visitors for expression reads and constructor invocations; delegates chain/reference handling, patterns and iteration. Seals component returns without sealing ordinary callback returns. |
 | Frame installation | `component.ts` | Adds the documented memoization opt-out, frame hook and fallthrough finish only after instrumentation, so generated setup is not transformed. |
 | Program import | `plugin.ts` | Inserts the generated internal hook import after all component owners are processed. |
@@ -55,3 +55,11 @@ Keep diagnostic precedence and generated identifier allocation deterministic. A 
 `true` selects client source; `'client'` restricts expansion to modules with `'use client'`. Dependency files under node_modules are excluded and must be distributed precompiled. The exact `'use no service tracking'` directive excludes framework infrastructure from props expansion while explicit useService consumers retain normal tracking. These exclusions prevent Next.js transpilation from treating provider/Next infrastructure as application receivers.
 
 The receiver registry trusts only explicit compiler registration and wrapper edges proven to call imported React memo/forwardRef. Never infer trust from a display name, arbitrary HOC, or React implementation properties. Mutable JSX type bindings remain guarded. Keep new composition diagnostics outside the legacy characterization corpus unless the default compiler contract intentionally changes.
+
+## Memo dependency replay
+
+In selected receiving-component modules, `service-validation.ts` rewrites recognized imported React `useMemo` calls to the internal `useServiceMemo` hook and supplies the current render frame. Legacy mode preserves its diagnostic path. The program imports the helper only when used; application code keeps React's authored hook and dependency array.
+
+`use-service-memo.ts` owns the React memo cell and its captured observable versions. A cache hit adopts the saved dependencies into the new frame. A `MemoCache` instance created through `useState` is a per-memo external store: `useSyncExternalStore` reads its cached immutable token, which changes when an observed version changes and participates in React's memo dependency comparison. Non-service React inputs remain the responsibility of the authored dependency array. The factory must stay synchronous and pure.
+
+React owns the cached value, while a post-commit effect publishes the metadata used to validate later attempts. Nothing writes committed dependency ownership during render, so abandoned work cannot replace it. `memo-cache.ts` owns the narrow source subscriptions and releases them when React unsubscribes. Snapshot validation and publication detect intervening version changes and can request another render/calculation. This adds internal Hook cells and subscriptions per memo; cache retention remains an optimization rather than an application identity guarantee. Keep the helper's Hook order and frame adoption behavior covered by concurrent, Suspense and selective-render tests when changing this protocol.

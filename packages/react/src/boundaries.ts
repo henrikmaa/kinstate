@@ -7,7 +7,7 @@ import {
   assertSnapshotCaptures,
 } from './callback-boundaries.js';
 
-export type BoundaryKind = 'value' | 'command' | 'ref';
+export type BoundaryKind = 'value' | 'command' | 'ref' | 'props';
 
 // Only transitively immutable validated data is reusable. Authored configs,
 // callback captures and native collection contents may change between checks.
@@ -90,6 +90,35 @@ export function assertComponentBoundary(
   kind: BoundaryKind,
   receiver?: unknown,
 ): void {
+  if (kind === 'props') {
+    // A JSX spread is a prop list, not an arbitrary nested config. Apply the
+    // same root command/ref rules as individually authored JSX attributes.
+    if (value == null) return;
+    if (isReactive(value)) {
+      if (isReactiveComponent(receiver)) {
+        assertDeferredCaptures(value);
+        return;
+      }
+      throw new TypeError(
+        'Reactive objects cannot cross component boundaries. Read primitive values, derive plain data during rendering, or resolve useService in the receiving component.',
+      );
+    }
+    const fields = Object.getOwnPropertyDescriptors(Object(value));
+    for (const key of Reflect.ownKeys(fields)) {
+      const field = Reflect.get(fields, key) as PropertyDescriptor;
+      if (!field.enumerable) continue;
+      if (!('value' in field))
+        throw new TypeError('Reactive spread props must use data properties, not getters.');
+      const fieldKind =
+        key === 'ref'
+          ? 'ref'
+          : typeof key === 'string' && /^on[A-Z]/.test(key)
+            ? 'command'
+            : 'value';
+      assertComponentBoundary(field.value, fieldKind, receiver);
+    }
+    return;
+  }
   // Evaluated scalar props cannot carry live state or deferred callbacks. This
   // is the common render path; do not allocate a graph walk for each text prop.
   if (

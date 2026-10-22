@@ -20,13 +20,14 @@ function stableReceiver(path: NodePath, context: ComponentContext): t.Identifier
 function guardBoundary(
   path: NodePath,
   context: ComponentContext,
-  kind: 'value' | 'command' | 'ref' = 'value',
+  kind: 'value' | 'command' | 'ref' | 'props' = 'value',
   receiver?: t.Expression,
 ): void {
   if (!path.isExpression() || !referencesDerived(path, context)) return;
   const deferred = isDeferredCallback(path, context);
   const asynchronous = hasAsynchronousCallback(path, context);
-  const certified = kind === 'value' && certifyBoundaryCallbacks(path, context);
+  const certified =
+    (kind === 'value' || kind === 'props') && certifyBoundaryCallbacks(path, context);
   if (receiver && kind === 'value' && asynchronous && !certified)
     throw path.buildCodeFrameError(
       'Reactive render callbacks must be synchronous; asynchronous work belongs in service methods or command callbacks.',
@@ -81,7 +82,7 @@ export function guardJsxBoundaries(context: ComponentContext): void {
       for (const attribute of path.get('attributes')) {
         if (attribute.isJSXSpreadAttribute()) {
           const argument = attribute.get('argument');
-          guardBoundary(argument, context, 'value', receiver);
+          guardBoundary(argument, context, 'props', receiver);
           continue;
         }
         if (!attribute.isJSXAttribute()) continue;
@@ -99,6 +100,7 @@ export function guardJsxBoundaries(context: ComponentContext): void {
         path.skip();
         return;
       }
+      if (context.program.reactiveProps && !context.program.owners.has(path)) return;
       const node = path.node;
       const name =
         (t.isFunctionDeclaration(node) || t.isFunctionExpression(node)) && node.id
@@ -157,13 +159,13 @@ export function guardElementFactoryCall(
           const kind = name === 'ref' ? 'ref' : /^on[A-Z]/.test(name) ? 'command' : 'value';
           guardBoundary(property.get('value'), context, kind, receiver);
         } else if (property.isSpreadElement())
-          guardBoundary(property.get('argument'), context, 'value', receiver);
+          guardBoundary(property.get('argument'), context, 'props', receiver);
         else if (referencesDerived(property, context))
           throw property.buildCodeFrameError(
             'Reactive render-prop methods cannot cross createElement component props. Use an on* command callback or resolve useService in the child.',
           );
       }
-    } else if (props) guardBoundary(props, context, 'value', receiver);
+    } else if (props) guardBoundary(props, context, 'props', receiver);
     for (const child of args.slice(2)) guardBoundary(child, context, 'value', receiver);
   }
 }

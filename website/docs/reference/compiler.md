@@ -52,6 +52,12 @@ Instrumentation opts components out of React Compiler optimization with its docu
 
 ## Diagnostics and boundaries
 
-Unsupported escapes are rejected rather than replaced by whole-service subscriptions. Examples include hidden service reads in `useMemo`, uncompiled reactive render callbacks, component returns crossing `finally`, ambiguous reassigned hook-shaped method aliases, and parameter defaults whose lexical environment cannot be preserved. Literal defaults inside destructuring are supported. Read [limitations](../guide/limitations.md) before relying on advanced syntax.
+Unsupported escapes are rejected rather than replaced by whole-service subscriptions. Examples include hidden service reads in `useMemo` under legacy `reactiveProps: false` mode, uncompiled reactive render callbacks, component returns crossing `finally`, ambiguous reassigned hook-shaped method aliases, and parameter defaults whose lexical environment cannot be preserved. Literal defaults inside destructuring are supported. Read [limitations](../guide/limitations.md) before relying on advanced syntax.
 
 Configure the plugin in both production and tests, and keep its version aligned with `@kinstate/react`. The compiler does not rewrite business classes or provide a global service fallback. Services remain ordinary core objects usable without a compiler outside React; only React dependency capture requires this build step.
+
+## React `useMemo`
+
+In modules selected by `reactiveProps: true` or `'client'`, recognized imported React `useMemo` calls inside instrumented components use a private dependency-aware runtime hook. The authored API stays unchanged. Observable reads invalidate the calculation when their versions change; cache hits replay those reads into the current render attempt so subscriptions remain active. Authored dependency arrays still govern ordinary React inputs.
+
+Factories must be synchronous and pure. React owns the cached value; each memo also owns a small external store read through `useSyncExternalStore`. Its immutable token changes when observed versions change, while an effect publishes dependency metadata after commit. Speculative work cannot replace committed metadata. This adds Hook cells and narrow source subscriptions; a version change around commit can cause another calculation. React may discard memo caches normally. The helper is part of the compiler/runtime ABI, not a public hook. Legacy mode retains its existing memo diagnostics.

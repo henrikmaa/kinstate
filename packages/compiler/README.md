@@ -30,7 +30,7 @@ Components keep their authored `useService(Class)` API. The transform adds a ren
 
 Type syntax and JSX remain intact for downstream transforms. Source maps are returned by the Vite adapter. Vite adapter options: `include?: RegExp`, `importSource?: string`.
 
-The transform diagnoses custom-hook consumption, async service consumers, opaque service escapes and service-dependent memoization. Custom component props accept evaluated primitive/plain data and ordinary on* commands; runtime boundary guards reject live reactive object escapes. Deferred render callbacks capturing service state remain diagnosed. Effects and command callbacks may use stable service references in dependency arrays; useMemo must not conceal reactive reads. Resolve the service in the component that performs those reads.
+The transform diagnoses custom-hook consumption, async service consumers and unsupported service escapes. Legacy mode (`reactiveProps: false`) also diagnoses service reads concealed by React `useMemo`; custom boundaries require evaluated data and supported commands. With receiving-component instrumentation enabled, ordinary imported React `useMemo` callbacks can read services and live props while retaining dependency-aware caching. Effects and command callbacks may use stable service references in dependency arrays. See the mode-specific contracts below.
 
 Use matching 0.1.x React/compiler packages. ESM, MIT.
 
@@ -51,3 +51,16 @@ Use `kinstate({ reactiveProps: true })` with Vite for ordinary client component 
 Props mode reserves PascalCase functions/default function exports for components. Move whole-parameter defaults/rest and lexical destructuring defaults into the function body, and use separate variable declarations for components. The module directive `'use no service tracking'` excludes infrastructure from props-mode discovery while explicit useService consumers remain tracked. Runtime packages carry this directive to prevent reinstrumentation by transpilePackages.
 
 Dependency files under node_modules are excluded from Babel instrumentation as well as the Vite adapter. Publish consuming components precompiled; this prevents Next.js/framework infrastructure and already compiled libraries from being transformed again.
+
+## React memoization
+
+With `reactiveProps: true`, or in modules selected by `'client'` mode, authored React `useMemo` remains the integration:
+
+```tsx
+const service = useService(CartService);
+const label = useMemo(() => formatCurrency(service.total, locale), [service, locale]);
+```
+
+The compiler rewrites recognized React memo calls inside instrumented components to a private runtime hook. It collects observable reads during calculation, replays them into each render frame on cache hits, and invalidates the memo when observed versions change. React still checks the authored dependencies; include ordinary React state/props such as `locale` there. Factories must remain synchronous and pure. A service getter shares its computed cache across consumers; React memo caches remain local to their component instance.
+
+The private hook uses React's own memo cell for the value and a per-memo external store, created through `useState`, for dependency metadata. `useSyncExternalStore` reads its cached immutable invalidation token; an effect publishes dependencies after commit. Abandoned renders cannot publish that metadata. Each memo adds Hook cells and subscriptions to its actual observed dependencies. Version validation around subscription/publication can schedule another calculation when state changes during commit; cache retention remains subject to React's normal eviction behavior. No public wrapper or application subscription is required. Legacy mode keeps its existing memo diagnostics.

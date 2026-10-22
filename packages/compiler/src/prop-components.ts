@@ -18,7 +18,64 @@ export function componentExpression(
   return expression;
 }
 
-/** Opt-in source files reserve PascalCase function bindings and default functions for components. */
+/** Local ordinary calls prove a PascalCase binding is a utility, not a React receiver. */
+function ordinaryInvocation(
+  owner: NodePath<t.Function>,
+  expression: NodePath,
+): NodePath | undefined {
+  const parent = expression.parentPath;
+  const names = new Set<string>();
+  if (owner.isFunctionDeclaration() && owner.node.id) names.add(owner.node.id.name);
+  if (parent?.isVariableDeclarator() && t.isIdentifier(parent.node.id))
+    names.add(parent.node.id.name);
+  const seen = new Set<t.Node>();
+  const inspect = (binding: ReturnType<NodePath['scope']['getBinding']>): NodePath | undefined => {
+    if (!binding || seen.has(binding.identifier)) return;
+    seen.add(binding.identifier);
+    for (const reference of binding.referencePaths) {
+      const use = reference.parentPath;
+      if (!use) continue;
+      if (
+        (use.isCallExpression() || use.isOptionalCallExpression() || use.isNewExpression()) &&
+        use.node.callee === reference.node
+      )
+        return use;
+      if (use.isTaggedTemplateExpression() && use.node.tag === reference.node) return use;
+      if (
+        (use.isCallExpression() || use.isOptionalCallExpression()) &&
+        (t.isMemberExpression(use.node.callee) || t.isOptionalMemberExpression(use.node.callee)) &&
+        !use.node.callee.computed &&
+        t.isIdentifier(use.node.callee.property) &&
+        /^(map|flatMap|forEach|filter|reduce|reduceRight|find|findIndex|some|every)$/.test(
+          use.node.callee.property.name,
+        ) &&
+        use.node.arguments[0] === reference.node
+      )
+        return use;
+      if (
+        use.isJSXExpressionContainer() &&
+        use.parentPath.isJSXAttribute() &&
+        t.isJSXIdentifier(use.parentPath.node.name) &&
+        (/^on[A-Z]/.test(use.parentPath.node.name.name) || use.parentPath.node.name.name === 'ref')
+      )
+        return use;
+      if (
+        use.isVariableDeclarator() &&
+        use.node.init === reference.node &&
+        t.isIdentifier(use.node.id)
+      ) {
+        const invocation = inspect(use.scope.getBinding(use.node.id.name));
+        if (invocation) return invocation;
+      }
+    }
+  };
+  for (const name of names) {
+    const invocation = inspect(owner.scope.getBinding(name));
+    if (invocation) return invocation;
+  }
+}
+
+/** Opt-in PascalCase candidates must not also be invoked as ordinary helpers. */
 export function discoverPropComponents(
   program: NodePath<t.Program>,
   owners: ConsumerOwners,
@@ -41,6 +98,14 @@ export function discoverPropComponents(
             ? parent.node.id.name
             : '';
       if (/^[A-Z]/.test(name) || parent?.isExportDefaultDeclaration()) {
+        const invocation = ordinaryInvocation(path, expression);
+        if (invocation) {
+          if (owners.has(path))
+            throw invocation.buildCodeFrameError(
+              'Service-consuming components must be rendered by React, not called as ordinary functions. Use JSX or createElement.',
+            );
+          return;
+        }
         if (!path.node.async && !path.node.generator && !owners.has(path)) owners.set(path, []);
       }
     },

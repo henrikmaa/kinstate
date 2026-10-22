@@ -109,6 +109,8 @@ For an existing Babel pipeline, add `module:@kinstate/compiler` to `plugins` whi
 
 Consumers must be synchronous function components, including supported React `memo`/`forwardRef` forms. Call `useService` directly in the component and assign its result to a local variable. Custom-hook consumption is diagnosed. Each consuming component should resolve its own service; see [compiler limitations](docs/LIMITATIONS.md) before passing reactive data through component props or memoization.
 
+With `reactiveProps: true` for client source (or selected `'client'` modules), ordinary imported React `useMemo` callbacks may read service/live-prop state. The compiler preserves their observable dependencies across cache hits and invalidates them when those reads change. Keep non-service React inputs in the authored dependency array and keep factories synchronous and pure. Legacy compiler mode retains concealed-read diagnostics. See [memoization and composition](docs/COMPOSITION.md).
+
 ## Live inputs from any React state source
 
 Use `serviceInputs()` to bind ordinary values from props, context, local state, or another library's hook. No library adapter or synchronization effect is needed in application code.

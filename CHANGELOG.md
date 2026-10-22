@@ -2,6 +2,8 @@
 
 ## 0.1.0
 
+- Preserve ordinary React `useMemo` caches with service/live-prop reads in receiving-component mode, replaying cached dependencies and invalidating observed versions through a private compiler/runtime hook. Commit-only metadata keeps speculative renders isolated; legacy-mode diagnostics remain unchanged.
+
 - Reduced render tracking allocations with a private accumulating collector, scalar boundary fast paths, and reuse of validated transitively immutable data. Mutable configs, callback captures and native collections remain freshly validated.
 
 - Fixed severe drawDB drag latency caused by callback validation traversing React element ownership graphs. Validate rendered props only, keep refs imperative, and retain nested callback safety checks without application memoization workarounds.

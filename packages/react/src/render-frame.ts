@@ -21,6 +21,13 @@ export class RenderFrame {
     return collectInto(read, this.dependencies);
   }
 
+  /** Replay cached memo reads without replacing this attempt's earliest versions. */
+  adopt(dependencies: ReadonlyMap<Dependency, number>): void {
+    if (!this.open) return;
+    for (const [dependency, version] of dependencies)
+      if (!this.dependencies.has(dependency)) this.dependencies.set(dependency, version);
+  }
+
   /** Compiler boundary for already evaluated custom-component values and commands. */
   boundary<T>(value: T, kind: BoundaryKind, receiver?: unknown): T {
     assertComponentBoundary(value, kind, receiver);

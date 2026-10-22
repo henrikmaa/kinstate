@@ -219,6 +219,29 @@ it.each([
   'class Projection {text=state.user.name}const value=React.useMemo(()=>new Projection(),[]);return <span>{value.text}</span>;',
   'class Projection {text=state.user.name}const Alias=Projection;const value=React.useMemo(()=>new Alias(),[]);return <span>{value.text}</span>;',
   'class Projection {text=state.user.name}const value=React.useMemo(()=>new (Projection as typeof Projection)(),[]);return <span>{value.text}</span>;',
-])('diagnoses constructor reads concealed by memoization: %s', (body) => {
-  expect(() => compile(body, {})).toThrow(/useMemo must not hide reactive service reads/);
+])('replays constructor reads retained by memoization: %s', async (body) => {
+  class Label {
+    text: string;
+    constructor(user: { name: string }) {
+      this.text = user.name;
+    }
+  }
+  const Parent = compile(body, { Label });
+  const scope = new ServiceScope([State]);
+  try {
+    render(
+      <Services.ServiceProvider services={[State]} scope={scope}>
+        <Parent />
+      </Services.ServiceProvider>,
+    );
+    expect(screen.getByText('Ada')).toBeTruthy();
+    await act(async () => {
+      scope.get(State).rename();
+      flushSync();
+    });
+    expect(screen.getByText('Grace')).toBeTruthy();
+  } finally {
+    cleanup();
+    scope.dispose();
+  }
 });

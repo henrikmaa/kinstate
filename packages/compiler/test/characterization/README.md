@@ -23,3 +23,10 @@ contract: review generated output and source maps or diagnostics explicitly. Do
 not regenerate expected results merely to make a refactor pass. Runtime semantics,
 React integration, and subscription behavior remain covered by the other compiler
 and cross-package suites; byte-for-byte characterization complements those tests.
+
+One reviewed correctness change intentionally updates the historical
+`directive-import-and-name-collision` output and source map: generated render-frame
+hook imports now avoid bindings nested inside component scopes. The old output
+could call an authored `useReactive_renderFrame` value instead of the imported
+hook. The fixture preserves the authored collision and now requires the generated
+`useReactive_renderFrame2` alias. The other 38 historical cases remain unchanged.
