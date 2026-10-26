@@ -58,7 +58,7 @@ import { ServiceProvider, useService } from 'kinstate/react';
 
 For Vite, import the plugin from `kinstate/compiler/vite`. For Next.js, import `withKinstate` from `kinstate/compiler/next`; both configure `kinstate/react` tracking automatically. The Babel plugin is available at `kinstate/compiler`. The root `kinstate` entry also exports core APIs and works without React.
 
-The Git package bundles the three scoped packages and their compiler dependencies, preserving one shared core/runtime. React, Vite and Next remain application peers. Do not point each `@kinstate/*` dependency at the same repository URL, or combine Git and scoped registry copies in one application: npm selects the repository root, and separate runtime copies have separate service contexts. Existing examples below use the scoped workspace/release imports; replace `@kinstate/` with `kinstate/` when using the Git distribution. See [installation and release checks](docs/RELEASE.md#git-installation).
+The Git package includes self-contained compiled copies of the three maintained packages with shared relative module references. It has no unpublished `@kinstate/*` registry dependencies; compiler dependencies resolve normally through the package manager. React, Vite and Next remain application peers. Do not point each `@kinstate/*` dependency at the same repository URL, or combine Git and scoped registry copies in one application: npm selects the repository root, and separate runtime copies have separate service contexts. Existing examples below use the scoped workspace/release imports; replace `@kinstate/` with `kinstate/` when using the Git distribution. See [installation and release checks](docs/RELEASE.md#git-installation).
 
 ## Build and run
 

@@ -17,3 +17,5 @@ website/doc_build/
 website/.rspress/
 
 website/.test-build/
+
+distribution/sources/

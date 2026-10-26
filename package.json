@@ -15,7 +15,7 @@
     "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
   },
   "scripts": {
-    "build": "npm run build -w @kinstate/core && npm run build -w @kinstate/react && npm run build -w @kinstate/compiler && tsc -p distribution/tsconfig.json",
+    "build": "npm run build -w @kinstate/core && npm run build -w @kinstate/react && npm run build -w @kinstate/compiler && tsc -p distribution/tsconfig.json && node scripts/build-git-distribution.mjs",
     "typecheck": "npm run build && tsc --noEmit -p tsconfig.tests.json",
     "test": "vitest run",
     "test:phase1": "vitest run packages/tests/phase1",
@@ -25,7 +25,7 @@
     "test:browser": "playwright test",
     "bench": "npm run build && tsx benchmarks/run.tsx",
     "build:examples": "npm run build && npm run build -w @kinstate/example-vite && npm run build -w @kinstate/example-next",
-    "check": "npm run typecheck && npm test && npm run check:boundaries && npm run format:check && node scripts/check-hooks.mjs && npm run bench:test && npm run bench:typecheck && npm run test:packages && npm run test:git",
+    "check": "npm run typecheck && npm test && npm run check:boundaries && npm run format:check && node scripts/check-hooks.mjs && npm run bench:test && npm run bench:typecheck && npm run test:distribution && npm run test:packages && npm run test:git",
     "check:hooks": "npm run build && node scripts/check-hooks.mjs",
     "bench:quick": "npm run build && tsx benchmarks/run.tsx --quick",
     "bench:test": "node --import tsx --test benchmarks/*.test.mjs benchmarks/*.test.ts",
@@ -43,16 +43,15 @@
     "docs:test": "playwright test --config website/playwright.config.ts",
     "test:next:dev": "playwright test --config next-dev-tests/playwright.config.ts",
     "prepare": "npm run build",
-    "test:git": "node scripts/verify-git-install.mjs"
+    "test:git": "node scripts/verify-git-install.mjs",
+    "test:distribution": "node --test scripts/build-git-distribution.test.mjs",
+    "test:yarn": "node scripts/verify-yarn-distribution.mjs"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.0",
     "@babel/preset-react": "^7.27.0",
     "@babel/preset-typescript": "^7.27.0",
-    "@babel/types": "^7.28.0",
     "@playwright/test": "^1.56.0",
     "@testing-library/react": "^16.3.0",
-    "@types/babel__core": "^7.20.5",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -71,7 +70,10 @@
     "valtio": "^2.1.0",
     "vite": "^7.1.0",
     "vitest": "^5.0.5",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.0",
+    "magic-string": "^0.30.21",
+    "@jridgewell/remapping": "^2.3.5",
+    "@jridgewell/trace-mapping": "^0.3.31"
   },
   "description": "Kinstate Git distribution. Ordinary classes. Reactive state.",
   "license": "MIT",
@@ -80,7 +82,8 @@
     "distribution/dist",
     "distribution/src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "distribution/sources"
   ],
   "exports": {
     ".": {
@@ -127,15 +130,10 @@
   "main": "./distribution/dist/core.js",
   "types": "./distribution/dist/core.d.ts",
   "dependencies": {
-    "@kinstate/core": "0.1.0",
-    "@kinstate/react": "0.1.0",
-    "@kinstate/compiler": "0.1.0"
+    "@babel/core": "^7.28.0",
+    "@babel/types": "^7.28.0",
+    "@types/babel__core": "^7.20.5"
   },
-  "bundledDependencies": [
-    "@kinstate/core",
-    "@kinstate/react",
-    "@kinstate/compiler"
-  ],
   "peerDependencies": {
     "react": "^18.3.1 || ^19.0.0",
     "vite": ">=5 <9",

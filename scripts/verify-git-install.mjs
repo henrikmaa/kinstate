@@ -99,14 +99,14 @@ function assertInstalledArtifacts(consumer) {
   const installed = join(consumer, 'node_modules/kinstate');
   for (const name of ['core', 'react', 'compiler']) {
     assert.equal(
-      lstatSync(join(installed, 'node_modules/@kinstate', name)).isSymbolicLink(),
+      lstatSync(join(installed, 'distribution/dist/workspaces', name)).isSymbolicLink(),
       false,
-      `Bundled @kinstate/${name} must contain files, not a workspace symlink`,
+      `Embedded ${name} must contain files, not a workspace symlink`,
     );
     for (const file of ['index.js', 'index.d.ts'])
       assert.ok(
-        existsSync(join(installed, 'node_modules/@kinstate', name, 'dist', file)),
-        `Git installation omitted bundled @kinstate/${name}/dist/${file}`,
+        existsSync(join(installed, 'distribution/dist/workspaces', name, file)),
+        `Git installation omitted embedded ${name}/${file}`,
       );
   }
   for (const unwanted of ['packages', 'website', 'benchmarks', '.git'])
@@ -161,9 +161,9 @@ const compilerRequire=createRequire(import.meta.resolve('kinstate/compiler'));
 const {transformSync}=compilerRequire('@babel/core');
 assert.equal(Service,CoreService);assert.equal(RenderFrame,SameFrame);
 const reactRequire=createRequire(import.meta.resolve('kinstate/react'));
-const scopedReactRequire=createRequire(reactRequire.resolve('@kinstate/react'));
+const runtimeReactRequire=createRequire(reactRequire.resolve('./workspaces/react/index.js'));
 assert.equal(reactRequire.resolve('react'),require.resolve('react'));
-assert.equal(scopedReactRequire.resolve('react'),require.resolve('react'));
+assert.equal(runtimeReactRequire.resolve('react'),require.resolve('react'));
 class Counter extends Service { count=0; name='Counter'; increment(){this.count++;} }
 const scope=new ServiceScope([Counter]);const service=scope.get(Counter);let runs=0;
 const stop=observe(()=>{void service.count;runs++});service.name='Other';flushSync();

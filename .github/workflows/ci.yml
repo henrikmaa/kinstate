@@ -32,6 +32,9 @@ jobs:
       - run: npm run build
       - run: npm run test:packages
       - run: npm run test:git
+      - run: npm run test:distribution
+      - run: npm install --global corepack@0.35.0
+      - run: npm run test:yarn
       - run: npm run build:examples
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
