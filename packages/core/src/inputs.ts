@@ -1,6 +1,6 @@
 import type { Service, ServiceConstructor, ValidInjection } from './service.js';
 
-/** External input descriptors own only shallow snapshots; nested values stay borrowed. */
+/** Descriptors snapshot field values; scopes adopt their data when publishing. */
 type Equal<X, Y> =
   (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? true : false;
 type InputKeys<T> = {
@@ -26,7 +26,7 @@ export interface ServiceInputBinding {
 }
 const inputBindings = new WeakSet<object>();
 const unsafeInputKeys = new Set(['__proto__', 'constructor', 'prototype', 'onInit', 'onDispose']);
-/** Bind ordinary external state to declared service fields, without copying nested data. */
+/** Describe ordinary external state for publication into declared service fields. */
 export function serviceInputs<C extends ServiceConstructor, V extends object>(
   service: C & ValidInjection<C>,
   values: V & ServiceInputs<InstanceType<NoInfer<C>>>,

@@ -100,8 +100,11 @@ describe('synchronous ordinary-data read consistency', () => {
       expect(row.value).toBe(11);
       expect(row.child).toBe(row.child);
       const raw = { value: 20 };
-      Object.defineProperty(row, 'child', { configurable: false, writable: false, value: raw });
-      expect(row.child).toBe(raw);
+      row.child = raw;
+      const canonical = row.child;
+      Object.defineProperty(row, 'child', { configurable: false, writable: false });
+      expect(row.child).toBe(canonical);
+      expect(row.child).not.toBe(raw);
       Reflect.deleteProperty(row, 'value');
       expect(row.value).toBeUndefined();
       Reflect.set(row, 'value', 30);

@@ -121,17 +121,38 @@ function defaultComponentName(owner: NodePath<t.Function>): t.Identifier {
   return name;
 }
 
-/** Mark the actual exported/called receiver. Hoisted declarations are registered before authored effects. */
+/** Is the outermost authored wrapper already React.memo, including import aliases? */
+function isMemoWrapper(expression: NodePath, imports: ImportBindings): boolean {
+  if (!expression.isCallExpression() || !isImportedComponentWrapper(expression, imports))
+    return false;
+  const callee = expression.node.callee;
+  if (t.isIdentifier(callee)) {
+    const imported = expression.scope.getBinding(callee.name)?.path;
+    return (
+      !!imported?.isImportSpecifier() && t.isIdentifier(imported.node.imported, { name: 'memo' })
+    );
+  }
+  return (
+    t.isMemberExpression(callee) &&
+    !callee.computed &&
+    t.isIdentifier(callee.property, { name: 'memo' })
+  );
+}
+
+/** Bind the actual exported receiver to a cached implicit memo, retaining hoisting. */
 export function markComponent(
   owner: NodePath<t.Function>,
   imports: ImportBindings,
   marker: t.Identifier,
 ): void {
   const expression = componentExpression(owner, imports);
+  const memoize = !isMemoWrapper(expression, imports);
+  const mark = (value: t.Expression) =>
+    t.callExpression(t.cloneNode(marker), [value, t.booleanLiteral(memoize)]);
   if (owner.isFunctionDeclaration()) {
     if (!owner.node.id) owner.node.id = defaultComponentName(owner);
     const statement = t.expressionStatement(
-      t.callExpression(t.cloneNode(marker), [t.cloneNode(owner.node.id)]),
+      t.assignmentExpression('=', t.cloneNode(owner.node.id), mark(t.cloneNode(owner.node.id))),
     );
     const scope = owner.parentPath.isExportDeclaration()
       ? owner.parentPath.parentPath
@@ -158,16 +179,13 @@ export function markComponent(
         throw owner.buildCodeFrameError(
           'Reactive receiving component bindings require a program or block scope.',
         );
-      statement.insertAfter(
-        t.expressionStatement(
-          t.callExpression(t.cloneNode(marker), [t.cloneNode(declarator.node.id)]),
-        ),
-      );
+      expression.replaceWith(mark(expression.node));
     } else if (declarator.isExportDefaultDeclaration()) {
       const name = defaultComponentName(owner);
       declarator.replaceWithMultiple([
-        t.variableDeclaration('const', [t.variableDeclarator(t.cloneNode(name), expression.node)]),
-        t.expressionStatement(t.callExpression(t.cloneNode(marker), [t.cloneNode(name)])),
+        t.variableDeclaration('const', [
+          t.variableDeclarator(t.cloneNode(name), mark(expression.node)),
+        ]),
         t.exportDefaultDeclaration(t.cloneNode(name)),
       ]);
     } else

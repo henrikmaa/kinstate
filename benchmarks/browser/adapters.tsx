@@ -1,11 +1,11 @@
-import React, { memo, type ComponentType, type ReactNode } from 'react';
+import React, { memo, useMemo, type ReactNode } from 'react';
 import { makeAutoObservable, runInAction, observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
-import { createStore } from 'zustand/vanilla';
+import { createStore, type StoreApi } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import { proxy, useSnapshot, ref } from 'valtio';
-import { Service, ServiceScope, batch, serviceInputs } from '@kinstate/core';
-import { ServiceProvider, useService } from '@kinstate/react';
+import { ServiceScope, batch, serviceInputs } from '@kinstate/core';
+import { ServiceProvider } from '@kinstate/react';
 import type { Case, Library, Workload } from '../schema.js';
 import {
   initialState,
@@ -16,76 +16,9 @@ import {
   type Row,
   type State,
 } from './model.js';
-
-interface Stats {
-  renders: number;
-}
-interface Props {
-  index: number;
-  workload: Workload;
-  stats: Stats;
-}
-interface Adapter {
-  Consumer: ComponentType<Props>;
-  mutate(operation: number): void;
-  state: State;
-  wrap?(children: ReactNode): ReactNode;
-  dispose?(): void;
-}
-
-class BenchmarkService extends Service {
-  count = 0;
-  other = 0;
-  unrelated = 0;
-  active = true;
-  nested = { value: 0 };
-  rows: Row[] = [];
-  records: Record<number, Row> = {};
-  get filtered() {
-    return filteredRows(this.rows);
-  }
-}
-
-// This named function must pass through the actual package compiler before
-// React.memo is applied. All service reads remain inside its render body.
-function ServiceConsumer({ index, workload, stats }: Props) {
-  const service = useService(BenchmarkService);
-  stats.renders++;
-  let value: string | number;
-  switch (workload) {
-    case 'conditional':
-      value = service.active ? service.count : service.other;
-      break;
-    case 'nested-field':
-      value = service.nested.value;
-      break;
-    case 'array-visible-row':
-    case 'full-list-row':
-    case 'array-offscreen-row':
-    case 'api-payload':
-    case 'api-frozen':
-    case 'array-reorder':
-    case 'bulk-rows-100':
-    case 'map-and-replace':
-      value = service.rows[index]!.value;
-      break;
-    case 'normalized-row':
-      value = service.records[index]!.value;
-      break;
-    case 'append':
-    case 'array-remove':
-      value = service.rows.length;
-      break;
-    case 'filter-sort':
-    case 'immutable-input-filter':
-      value = service.filtered[index] ?? '-';
-      break;
-    default:
-      value = service.count;
-  }
-  return <span>{value}</span>;
-}
-const MemoServiceConsumer = memo(ServiceConsumer);
+import type { Adapter, Props, Stats } from './contracts.js';
+import { BenchmarkService } from './kinstate-state.js';
+import { MemoServiceConsumer, MemoDerivationConsumer } from './kinstate-consumers.js';
 
 class MobxState implements State {
   count = 0;
@@ -133,12 +66,18 @@ function immutableUpdate(
       for (let i = 0; i < 100; i++) count++;
       return { count };
     }
+    case 'persist-json':
+    case 'reactive-prop-row':
     case 'array-visible-row':
     case 'full-list-row':
     case 'array-offscreen-row':
+    case 'memo-filter':
     case 'filter-sort': {
       const index =
-        workload === 'array-visible-row' || workload === 'full-list-row'
+        workload === 'persist-json' ||
+        workload === 'array-visible-row' ||
+        workload === 'reactive-prop-row' ||
+        workload === 'full-list-row'
           ? operation % consumers
           : workload === 'array-offscreen-row'
             ? state.rows.length - 1
@@ -147,8 +86,8 @@ function immutableUpdate(
       const row = rows[index]!;
       rows[index] = {
         ...row,
-        value: row.value + (workload === 'filter-sort' ? 100 : 1),
-        active: workload === 'filter-sort' ? true : row.active,
+        value: row.value + (workload === 'filter-sort' || workload === 'memo-filter' ? 100 : 1),
+        active: workload === 'filter-sort' || workload === 'memo-filter' ? true : row.active,
       };
       return { rows };
     }
@@ -188,14 +127,176 @@ function immutableUpdate(
           value: index === 0 ? operation + 1 : row.value,
         })),
       };
+    case 'memo-local-render':
     case 'parent-rerender':
       return {};
   }
 }
 
+interface DerivedCache {
+  rows?: readonly Readonly<Row>[];
+  value: string[];
+}
+const derivedCaches = new WeakMap<object, DerivedCache>();
+function cachedFiltered(owner: object, rows: readonly Readonly<Row>[]): string[] {
+  let cache = derivedCaches.get(owner);
+  if (!cache) {
+    cache = { value: [] };
+    derivedCaches.set(owner, cache);
+  }
+  if (rows !== cache.rows) {
+    cache.rows = rows;
+    cache.value = filteredRows(rows);
+  }
+  return cache.value;
+}
+function isFiltered(workload: Workload): boolean {
+  return (
+    workload === 'filter-sort' ||
+    workload === 'immutable-input-filter' ||
+    workload === 'memo-filter'
+  );
+}
+function PlainRow({ row, stats }: { row: Readonly<Row>; stats: Stats }) {
+  stats.renders++;
+  return <span>{row.value}</span>;
+}
+const MemoPlainRow = memo(PlainRow);
+const MobxRow = observer(PlainRow);
+const MobxConsumer = observer(function MobxConsumer({ index, workload, stats, source }: Props) {
+  const state = source as MobxState;
+  stats.renders++;
+  if (workload === 'reactive-prop-row') return <MobxRow row={state.rows[index]!} stats={stats} />;
+  const value = isFiltered(workload)
+    ? (state.filtered[index] ?? '-')
+    : select(state, workload, index);
+  return <span>{value}</span>;
+});
+const MobxMemoConsumer = observer(function MobxMemoConsumer({
+  index,
+  workload,
+  stats,
+  source,
+}: Props) {
+  const state = source as MobxState;
+  // MobX tracks the computed/primitive outside React's cache, as recommended;
+  // the same projection is memoized without hiding observable reads in a cache hit.
+  const input = workload === 'memo-filter' ? (state.filtered[index] ?? '-') : state.count;
+  const value = useMemo(
+    () => (workload === 'memo-filter' ? input : Number(input) * 2),
+    [input, workload],
+  );
+  stats.renders++;
+  return <span>{value}</span>;
+});
+function zustandSelection(state: State, workload: Workload, index: number, owner: object) {
+  return isFiltered(workload)
+    ? (cachedFiltered(owner, state.rows)[index] ?? '-')
+    : select(state, workload, index);
+}
+const ZustandConsumer = memo(function ZustandConsumer({ index, workload, stats, source }: Props) {
+  const store = source as StoreApi<State>;
+  const value = useStore(store, (state) =>
+    workload === 'reactive-prop-row'
+      ? state.rows[index]!
+      : zustandSelection(state, workload, index, store),
+  );
+  stats.renders++;
+  if (workload === 'reactive-prop-row') return <MemoPlainRow row={value as Row} stats={stats} />;
+  return <span>{value as string | number}</span>;
+});
+const ZustandMemoConsumer = memo(function ZustandMemoConsumer({
+  index,
+  workload,
+  stats,
+  source,
+}: Props) {
+  const store = source as StoreApi<State>;
+  const input = useStore(store, (state) =>
+    workload === 'memo-filter' ? (cachedFiltered(store, state.rows)[index] ?? '-') : state.count,
+  );
+  const value = useMemo(
+    () => (workload === 'memo-filter' ? input : Number(input) * 2),
+    [input, workload],
+  );
+  stats.renders++;
+  return <span>{value}</span>;
+});
+const scoped = new Set<Workload>([
+  'persist-json',
+  'array-visible-row',
+  'bulk-rows-100',
+  'array-offscreen-row',
+  'full-list-row',
+  'normalized-row',
+  'nested-field',
+]);
+const ValtioRow = memo(function ValtioRow({ row, stats }: { row: Row; stats: Stats }) {
+  const snap = useSnapshot(row);
+  stats.renders++;
+  return <span>{snap.value}</span>;
+});
+const ValtioScopedConsumer = memo(function ValtioScopedConsumer({
+  index,
+  workload,
+  stats,
+  source,
+}: Props) {
+  const state = source as State;
+  const target =
+    workload === 'nested-field'
+      ? state.nested
+      : workload === 'normalized-row'
+        ? state.records[index]!
+        : state.rows[index]!;
+  const snap = useSnapshot(target);
+  stats.renders++;
+  return <span>{snap.value}</span>;
+});
+const ValtioConsumer = memo(function ValtioConsumer({ index, workload, stats, source }: Props) {
+  const state = source as State;
+  const snapshot = useSnapshot(state);
+  stats.renders++;
+  const value = isFiltered(workload)
+    ? (cachedFiltered(state, snapshot.rows)[index] ?? '-')
+    : select(snapshot, workload, index);
+  return <span>{value}</span>;
+});
+const ValtioPropsConsumer = memo(function ValtioPropsConsumer({ index, stats, source }: Props) {
+  stats.renders++;
+  return <ValtioRow row={(source as State).rows[index]!} stats={stats} />;
+});
+const ValtioMemoConsumer = memo(function ValtioMemoConsumer({
+  index,
+  workload,
+  stats,
+  source,
+}: Props) {
+  const state = source as State;
+  const snapshot = useSnapshot(state);
+  const input =
+    workload === 'memo-filter'
+      ? (cachedFiltered(state, snapshot.rows)[index] ?? '-')
+      : snapshot.count;
+  const value = useMemo(
+    () => (workload === 'memo-filter' ? input : Number(input) * 2),
+    [input, workload],
+  );
+  stats.renders++;
+  return <span>{value}</span>;
+});
+function wrapService(children: ReactNode, scope: ServiceScope | undefined): ReactNode {
+  return (
+    <ServiceProvider services={[BenchmarkService]} scope={scope}>
+      {children}
+    </ServiceProvider>
+  );
+}
+
 export function adapterFor(library: Library, test: Case): Adapter {
   const { workload, size, consumers } = test;
   const immutable = workload === 'immutable-input-filter';
+  const memoWorkload = workload === 'memo-filter' || workload === 'memo-local-render';
   if (library === 'kinstate') {
     const initial = initialState(size);
     const scope = new ServiceScope(
@@ -203,68 +304,40 @@ export function adapterFor(library: Library, test: Case): Adapter {
       immutable ? { inputs: [serviceInputs(BenchmarkService, { rows: initial.rows })] } : {},
     );
     const state = scope.get(BenchmarkService);
-    Object.assign(state, initial);
+    // The input boundary already seeded rows. Do not publish that payload twice
+    // during setup now that Kinstate adopts incoming state by copying it.
+    if (immutable) {
+      const { rows: _rows, ...remaining } = initial;
+      Object.assign(state, remaining);
+    } else Object.assign(state, initial);
     return {
-      Consumer: MemoServiceConsumer,
+      Consumer: memoWorkload ? MemoDerivationConsumer : MemoServiceConsumer,
       state,
+      context: scope,
       mutate: (operation) =>
         immutable
           ? void scope.applyInputs([
               serviceInputs(BenchmarkService, { rows: apiRows(size, operation + 1000, false) }),
             ])
           : batch(() => mutatePlain(state, workload, operation, consumers)),
-      wrap: (children) => (
-        <ServiceProvider services={[BenchmarkService]} scope={scope}>
-          {children}
-        </ServiceProvider>
-      ),
+      wrap: wrapService,
       dispose: () => scope.dispose(),
     };
   }
   if (library === 'mobx') {
     const state = new MobxState(size, immutable);
-    const Consumer = observer(function MobxConsumer({
-      index,
-      workload: selectedWorkload,
-      stats,
-    }: Props) {
-      stats.renders++;
-      const value =
-        selectedWorkload === 'filter-sort' || selectedWorkload === 'immutable-input-filter'
-          ? (state.filtered[index] ?? '-')
-          : select(state, selectedWorkload, index);
-      return <span>{value}</span>;
-    });
     return {
-      Consumer,
+      Consumer: memoWorkload ? MobxMemoConsumer : MobxConsumer,
       state,
+      source: state,
       mutate: (operation) => runInAction(() => mutatePlain(state, workload, operation, consumers)),
     };
   }
   if (library === 'zustand') {
     const store = createStore<State>(() => initialState(size));
-    let previousRows: readonly Readonly<Row>[] | undefined;
-    let derived: string[] = [];
-    function selector(state: State, selectedWorkload: Workload, index: number) {
-      if (selectedWorkload !== 'filter-sort' && selectedWorkload !== 'immutable-input-filter')
-        return select(state, selectedWorkload, index);
-      if (state.rows !== previousRows) {
-        previousRows = state.rows;
-        derived = filteredRows(state.rows);
-      }
-      return derived[index] ?? '-';
-    }
-    const Consumer = memo(function ZustandConsumer({
-      index,
-      workload: selectedWorkload,
-      stats,
-    }: Props) {
-      const value = useStore(store, (state) => selector(state, selectedWorkload, index));
-      stats.renders++;
-      return <span>{value}</span>;
-    });
     return {
-      Consumer,
+      Consumer: memoWorkload ? ZustandMemoConsumer : ZustandConsumer,
+      source: store,
       get state() {
         return store.getState();
       },
@@ -275,89 +348,15 @@ export function adapterFor(library: Library, test: Case): Adapter {
   const initial = initialState(size);
   if (immutable) initial.rows = ref(initial.rows);
   const state = proxy(initial);
-  // Valtio recommends subscribing to the smallest stable subtree. Whole-array
-  // replacement is a different case and must retain the root subscription.
-  if (
-    [
-      'array-visible-row',
-      'bulk-rows-100',
-      'array-offscreen-row',
-      'full-list-row',
-      'normalized-row',
-      'nested-field',
-    ].includes(workload)
-  ) {
-    const Consumer = memo(function ValtioScopedConsumer({ index, stats }: Props) {
-      const target =
-        workload === 'nested-field'
-          ? state.nested
-          : workload === 'normalized-row'
-            ? state.records[index]!
-            : state.rows[index]!;
-      const snapshot = useSnapshot(target);
-      stats.renders++;
-      return <span>{snapshot.value}</span>;
-    });
-    return {
-      Consumer,
-      state,
-      mutate: (operation) => {
-        if (immutable) state.rows = ref(apiRows(size, operation + 1000, false));
-        else mutatePlain(state, workload, operation, consumers);
-      },
-    };
-  }
-  let previousRows: readonly Readonly<Row>[] | undefined;
-  let derived: string[] = [];
-  const Consumer = memo(function ValtioConsumer({
-    index,
-    workload: selectedWorkload,
-    stats,
-  }: Props) {
-    const snapshot = useSnapshot(state);
-    // The shared cache reads the immutable snapshot. Reading `rows` still makes
-    // its identity a dependency for each consumer, including cache hits.
-    let value: string | number;
-    if (selectedWorkload === 'filter-sort' || selectedWorkload === 'immutable-input-filter') {
-      if (snapshot.rows !== previousRows) {
-        previousRows = snapshot.rows;
-        derived = filteredRows(snapshot.rows);
-      }
-      value = derived[index] ?? '-';
-    } else {
-      switch (selectedWorkload) {
-        case 'conditional':
-          value = snapshot.active ? snapshot.count : snapshot.other;
-          break;
-        case 'nested-field':
-          value = snapshot.nested.value;
-          break;
-        case 'array-visible-row':
-        case 'full-list-row':
-        case 'array-offscreen-row':
-        case 'api-payload':
-        case 'api-frozen':
-        case 'array-reorder':
-        case 'bulk-rows-100':
-        case 'map-and-replace':
-          value = snapshot.rows[index]!.value;
-          break;
-        case 'normalized-row':
-          value = snapshot.records[index]!.value;
-          break;
-        case 'append':
-        case 'array-remove':
-          value = snapshot.rows.length;
-          break;
-        default:
-          value = snapshot.count;
-      }
-    }
-    stats.renders++;
-    return <span>{value}</span>;
-  });
   return {
-    Consumer,
+    Consumer: memoWorkload
+      ? ValtioMemoConsumer
+      : workload === 'reactive-prop-row'
+        ? ValtioPropsConsumer
+        : scoped.has(workload)
+          ? ValtioScopedConsumer
+          : ValtioConsumer,
+    source: state,
     state,
     mutate: (operation) => {
       if (immutable) state.rows = ref(apiRows(size, operation + 1000, false));

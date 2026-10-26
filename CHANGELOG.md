@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Adopt plain objects and arrays as service-owned copies without changing `useService`, service method, or provider binding syntax. Preserve aliases and cycles within a publication, canonical shared references, callback identities, descriptors, and frozen snapshots. Native/custom instances, including Array subclasses, remain opaque.
+- Publish provider input fields only when their source values change by `Object.is`. Unchanged source references preserve local edits and normalization across parent renders; replacement references publish new copies. This replaces the earlier borrowed-input and reassert-on-every-commit behavior.
+- Reuse owned-array reverse shape proofs while invalidating them on canonical structural or descriptor changes. Borrowed derived arrays retain per-call validation.
+- Reduce compiled memo tracking allocations and reuse unchanged memo subscriptions while preserving abandoned-render and subscription-race validation.
+- Add implicit memo boundaries for compiled receiving components, cancellable observation scheduling, and benchmark provenance and noninferiority checks with explicit inconclusive results.
+
 ## 0.1.0
 
 - Preserve ordinary React `useMemo` caches with service/live-prop reads in receiving-component mode, replaying cached dependencies and invalidating observed versions through a private compiler/runtime hook. Commit-only metadata keeps speculative renders isolated; legacy-mode diagnostics remain unchanged.

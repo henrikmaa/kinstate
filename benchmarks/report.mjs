@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { summarize } from './report/statistics.mjs';
 import { markdownReport } from './report/markdown.mjs';
+import { evaluateParity, parityMarkdown } from './parity.mjs';
 import { htmlReport } from './report/html.mjs';
 
 export { summarize } from './report/statistics.mjs';
@@ -14,11 +15,14 @@ export async function writeReport(report, outputDirectory) {
     for (const key of ['setupMs', 'mountMs', 'updateMs', 'unmountMs', 'renders'])
       summarize(row.samples.map((sample) => sample[key]));
   }
-  const html = await htmlReport(report);
-  const md = markdownReport(report);
+  const parity = evaluateParity(report);
+  const html = await htmlReport(report, parity);
+  const md = markdownReport(report, parity);
   await mkdir(outputDirectory, { recursive: true });
   await Promise.all([
     writeFile(join(outputDirectory, 'report.html'), html),
     writeFile(join(outputDirectory, 'RESULTS.md'), md),
+    writeFile(join(outputDirectory, 'PARITY.md'), parityMarkdown(parity)),
+    writeFile(join(outputDirectory, 'parity.json'), JSON.stringify(parity, null, 2) + '\n'),
   ]);
 }

@@ -29,10 +29,13 @@ Input fields must be public writable data fields with runtime initializers. Call
 
 Pass callback inputs with the same helper: `serviceInputs(EditorService, { onSave: saveFromHook })`, where the class declares an initialized writable callback field. Core service access preserves the supplied callback and promise identity. React views expose stable callable wrappers with protected object results and promise resolutions; consumer wrapper/promise identity differs from the source. Service methods accessing that field use the latest committed callback. Detached older callbacks remain snapshots. Stable callback identity alone cannot invalidate computations reading hidden external state; bind that state separately.
 
-
 `useService` returns `ServiceView<T>`, a cached view distinct from `scope.get(T)`'s mutable canonical instance. Commands remain bound to that instance, including after `await`; nested objects, array callback values, reflective descriptors and method results do not expose writable service data. `ServiceView` and `ReadonlyServiceValue` are exported types. Method signatures remain unchanged to preserve generic/overload inference: a method return type can appear mutable even though its returned data is protected at runtime. Fields and getters receive deep readonly types.
 
 Map/Set/Date read operations are supported through views, but these values remain opaque to deep reactivity; replace their owning field through a command to publish changes. Mutators, custom native overrides and methods/accessors on other opaque nested instances are rejected; expose a service method instead. Command arguments that contain views are normalized through cached read-through plain-data adapters, without cloning or rewriting caller containers. Fixed properties needing replacement and opaque/accessor containers are outside that argument-normalization contract. Keep lifecycle calls owned by the provider, and invoke mutation commands from events/effects rather than render.
+
+## Parent-driven rendering
+
+Receiving-component compilation also inserts cached implicit React.memo boundaries. A parent changing local UI state can rerender without rerunning stable-prop child bodies. Each child keeps its own service subscriptions, context, and local-state updates. Changed callback/children identities retain React's normal shallow-prop behavior. Authored components must be pure React components, and their emitted tokens are rendered with JSX/createElement rather than called as ordinary helpers. No service data is stored in the wrapper cache.
 
 ## React memoization
 

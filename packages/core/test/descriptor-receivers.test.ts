@@ -22,10 +22,16 @@ class Counter extends Service {
 }
 
 describe('canonical getters and method receivers', () => {
-  it('preserves the canonical receiver in repeated cached data reads through a foreign proxy', () => {
+  it('copies foreign proxy descriptors without retaining its get trap and preserves accessor receivers', () => {
     const receivers: unknown[] = [];
     const foreign = new Proxy(
-      { value: 3 },
+      {
+        value: 3,
+        get doubled() {
+          receivers.push(this);
+          return this.value * 2;
+        },
+      },
       {
         get(target, key, receiver) {
           if (key === 'value') receivers.push(receiver);
@@ -42,7 +48,10 @@ describe('canonical getters and method receivers', () => {
     expect(row.value).toBe(3);
     expect(row.value).toBe(3);
     expect(source.rows.map((item) => item.value)).toEqual([3]);
-    expect(receivers.length).toBeGreaterThan(0);
+    expect(receivers).toHaveLength(0);
+    expect(row.doubled).toBe(6);
+    expect(row.doubled).toBe(6);
+    expect(receivers).toHaveLength(1);
     expect(receivers.every((receiver) => receiver === row)).toBe(true);
   });
 
@@ -117,7 +126,7 @@ describe('canonical getters and method receivers', () => {
 });
 
 describe('pinning observable data descriptors', () => {
-  it('invalidates captured values when pinning changes canonical proxy identity to the invariant raw value', () => {
+  it('preserves captured canonical identity when pinning an owned data slot', () => {
     const raw = { value: 1 };
     class State extends Service {
       child = raw;
@@ -127,19 +136,19 @@ describe('pinning observable data descriptors', () => {
     const values: object[] = [];
     const stop = observe(() => values.push(source.child));
     Object.defineProperty(source, 'child', { configurable: false, writable: false });
-    expect(source.child).toBe(raw);
+    expect(source.child).toBe(captured.value);
+    expect(Object.getOwnPropertyDescriptor(source, 'child')!.value).toBe(source.child);
     expect([...captured.dependencies].some(([dep, version]) => dep.getVersion() !== version)).toBe(
-      true,
+      false,
     );
     flushSync();
-    expect(values).toHaveLength(2);
+    expect(values).toHaveLength(1);
     expect(values[0]).not.toBe(raw);
-    expect(values[1]).toBe(raw);
     stop();
     flushSync();
   });
 
-  it('notifies native array iteration when frozen object indices change exposed identity', () => {
+  it('preserves native array iteration identities when freezing canonical object indices', () => {
     const raw = { value: 1 };
     class State extends Service {
       rows = [raw];
@@ -149,9 +158,10 @@ describe('pinning observable data descriptors', () => {
     const stop = observe(() => values.push(source.rows.map((row) => row)));
     Object.freeze(source.rows);
     flushSync();
-    expect(values).toHaveLength(2);
+    expect(values).toHaveLength(1);
     expect(values[0]![0]).not.toBe(raw);
-    expect(values[1]![0]).toBe(raw);
+    expect(values[0]![0]).toBe(source.rows[0]);
+    expect(Object.isFrozen(source.rows)).toBe(true);
     stop();
     flushSync();
   });
@@ -169,12 +179,14 @@ describe('pinning observable data descriptors', () => {
     const raw = { value: 2 };
     const scope = new ServiceScope([Input], { inputs: [serviceInputs(Input, { child: raw })] });
     const input = scope.get(Input);
+    const canonical = input.child;
     const read = vi.fn(() => input.child);
     const stop = observe(read);
     Object.defineProperty(input, 'child', { configurable: false, writable: false });
     flushSync();
     expect(read).toHaveBeenCalledTimes(1);
-    expect(input.child).toBe(raw);
+    expect(input.child).toBe(canonical);
+    expect(input.child).not.toBe(raw);
     stopCounter();
     stop();
     scope.dispose();

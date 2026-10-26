@@ -189,7 +189,7 @@ it('batches multiple input fields into one consumer update', () => {
   expect(renders - baseline).toBe(1);
 });
 
-it('reasserts supplied input values on provider commits while preserving unbound local state', async () => {
+it('preserves service edits until the external input publishes a replacement', async () => {
   const scope = new ServiceScope([UserService]);
   const service = scope.get(UserService);
   const user = { name: 'Ada' };
@@ -203,6 +203,13 @@ it('reasserts supplied input values on provider commits while preserving unbound
   });
   expect(service.label).toBe('local');
   view.rerender(tree());
+  expect(service.label).toBe('local');
+  view.rerender(
+    <ServiceProvider
+      scope={scope}
+      services={[serviceInputs(UserService, { user: { name: 'Ada' } })]}
+    />,
+  );
   expect(service.label).toBe('Ada');
   expect(service.draft).toBe('keep');
   view.unmount();
@@ -269,10 +276,12 @@ it('publishes each provider snapshot once when service reconciliation normalizes
   expect(screen.getByText('local:keep')).toBeTruthy();
   expect(reconciliations).toBe(3);
 
-  // An actual provider commit still reasserts its owner value, even if the
-  // caller's input value is Object.is-equal to the previous committed snapshot.
+  // Unchanged source values preserve service normalization and local edits.
   view.rerender(tree(' Ada '));
-  expect(screen.getByText('Ada:keep')).toBeTruthy();
+  expect(screen.getByText('local:keep')).toBeTruthy();
+  expect(reconciliations).toBe(3);
+  view.rerender(tree(' Grace '));
+  expect(screen.getByText('Grace:keep')).toBeTruthy();
   expect(reconciliations).toBe(4);
   expect(service).toBe(original);
   expect(initialized).toBe(1);

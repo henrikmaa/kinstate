@@ -23,6 +23,10 @@ export const workloads = [
   'array-reorder',
   'bulk-rows-100',
   'record-churn',
+  'reactive-prop-row',
+  'memo-filter',
+  'memo-local-render',
+  'persist-json',
 ] as const;
 export type Workload = (typeof workloads)[number];
 export interface Case {
@@ -32,6 +36,7 @@ export interface Case {
   operations: number;
 }
 export interface Sample {
+  block?: number;
   setupMs: number;
   mountMs: number;
   updateMs: number;
@@ -52,6 +57,7 @@ export interface Report {
     warmups: number;
     seed: number;
     scheduling: string;
+    coverage?: { complete: boolean; cases: Case[] };
     limitations: string[];
   };
   results: Result[];

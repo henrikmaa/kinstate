@@ -4,10 +4,18 @@ import { summarize } from './statistics.mjs';
 import { descriptions, labels, workloadLabels } from './metadata.mjs';
 import { initializeReport } from './client.mjs';
 
-export async function htmlReport(report) {
+export async function htmlReport(report, gate) {
   const css = await readFile(new URL('./styles.css', import.meta.url), 'utf8');
   const embedded = inlineJson(report);
   const methodology = report.methodology;
+  const format = (value) => (Number.isFinite(value) ? value.toFixed(4) : '—');
+  const parityTable = gate
+    ? `<section aria-label="Per-case MobX parity"><h2>Per-case MobX parity: ${escapeHtml(gate.status)}</h2>
+  <p>↓ Lower is better. Kinstate/MobX ratio; 1.05× is a 5% noninferiority tolerance, not exact equality. Every case and cost metric has its own verdict. Missing, historical, insufficient or uncertain data cannot pass. No overall timing average.</p>
+  <details><summary>Show all ${gate.rows.length} comparisons (${gate.counts.pass} pass, ${gate.counts.regression} regression, ${gate.counts.inconclusive} inconclusive)</summary>
+  <p>Nominal ${Math.round(gate.settings.confidence * 100)}% family-wise order-statistic intervals with Bonferroni correction. These bounds assume independent matched blocks; serial browser runs can violate that assumption. They do not guarantee results on other machines or future runs.</p>
+  <div class="table-wrap" tabindex="0"><table><thead><tr>${['Workload', 'Size', 'Metric', 'Kinstate', 'MobX', 'Ratio', 'Interval', 'Verdict', 'Evidence / limitation'].map((x) => `<th>${x}</th>`).join('')}</tr></thead><tbody>${gate.rows.map((row) => `<tr>${[row.workload, row.size, row.metric, format(row.candidate?.median), format(row.mobx?.median), format(row.ratio), row.interval?.map(format).join(' – ') ?? '—', row.status, row.reasons.join('; ')].map((x) => `<td>${escapeHtml(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details></section>`
+    : '';
   return /* HTML */ `<!doctype html>
     <html lang="en">
       <head>
@@ -57,6 +65,8 @@ export async function htmlReport(report) {
               static tables.
             </p></noscript
           >
+          ${gate?.historical ? '<p class="intro" role="note"><strong>Historical artifact.</strong> Missing source, lockfile and build fingerprints: these charts do not establish current Kinstate performance.</p>' : ''}
+          ${parityTable}
           <section class="notes" aria-label="Methodology and interpretation">
             <div>
               <h2>What was measured</h2>

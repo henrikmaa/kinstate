@@ -1,3 +1,4 @@
+import { parityMarkdown } from '../parity.mjs';
 import { summarize } from './statistics.mjs';
 import { descriptions, labels } from './metadata.mjs';
 
@@ -11,7 +12,7 @@ const markdown = (value) =>
     .replace(/[\r\n]+/g, ' ');
 const statText = (stat) => `${number(stat.median)} / ${number(stat.p95)}`;
 
-export function markdownReport(report) {
+export function markdownReport(report, parity) {
   const lines = [
     '# React state benchmark report',
     '',
@@ -19,6 +20,12 @@ export function markdownReport(report) {
     '',
     'Compare libraries only within the same workload and size. **Lower is better** for all reported cost metrics (time and render calls); this report does not compute an overall ranking.',
     '',
+    ...(parity?.historical
+      ? [
+          '**Historical artifact:** missing source/lockfile/build fingerprints; these timings do not establish current Kinstate performance.',
+          '',
+        ]
+      : []),
     '## Methodology',
     '',
     'Production React in Chromium. This is a controlled commit checkpoint benchmark, not natural event latency or concurrent scheduling. Every library uses the same flushSync scheduling. Each case receives warmups and repeated samples; execution order is randomized.',
@@ -83,5 +90,6 @@ export function markdownReport(report) {
     'Full sample data is preserved in the JSON report. The standalone HTML includes an embedded copy and a download button.',
     '',
   );
+  if (parity) lines.push('', parityMarkdown(parity));
   return lines.join('\n');
 }

@@ -14,7 +14,7 @@ class Data extends Service {
 }
 
 describe('component boundary validation', () => {
-  it('keeps borrowed payload reads lazy for compiled receivers', () => {
+  it('copies input payloads once and keeps compiled boundary validation lazy', () => {
     let enumerations = 0;
     let reads = 0;
     const rows = new Proxy(
@@ -44,13 +44,18 @@ describe('component boundary validation', () => {
     );
     const scope = new ServiceScope([Data], { inputs: [serviceInputs(Data, { rows })] });
     try {
-      const view = readonlyServiceValue(scope.get(Data));
+      const service = scope.get(Data);
+      expect(enumerations).toBeGreaterThan(0);
+      expect(reads).toBe(0);
+      enumerations = 0;
+      const view = readonlyServiceValue(service);
       const frame = new RenderFrame();
       expect(frame.boundary(view.rows, 'value', receiver)).toBe(view.rows);
       expect(enumerations).toBe(0);
       expect(reads).toBe(0);
       expect(view.rows[0]!.name).toBe('User 0');
-      expect(reads).toBe(1);
+      // Reading the copy must not call the original source Proxy's get trap.
+      expect(reads).toBe(0);
       expect(() => Reflect.set(view.rows[0]!, 'name', 'Changed')).toThrow(/read-only/);
     } finally {
       scope.dispose();

@@ -27,7 +27,9 @@ function execute(source: string, name: string, reactiveProps = false, state = ne
   let frame: RenderFrame;
   const runtime: Record<string, unknown> = {
     useRenderFrame: () => (frame = new RenderFrame()),
-    markReactiveComponent,
+    // This low-level expression harness invokes function bodies directly; real
+    // React memoized receiver behavior is covered by integration tests.
+    markReactiveComponent: (component: object) => markReactiveComponent(component),
     markReactiveWrapper,
     useService: () => state,
   };

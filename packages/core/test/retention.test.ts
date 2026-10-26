@@ -203,7 +203,7 @@ describe('canonical reactive introspection', () => {
     const native = new Map();
     class Values extends Service {
       nested = raw;
-      rows = [raw];
+      rows = [this.nested];
       frozen = frozen;
       native = native;
     }

@@ -5,7 +5,9 @@ import { createRequire } from 'node:module';
 import { cpus, platform, arch, totalmem } from 'node:os';
 import { resolve } from 'node:path';
 import { libraries, workloads } from './schema.js';
-import type { Case, Report, Result, Sample } from './schema.js';
+import { benchmarkCases } from './cases.js';
+import { benchmarkProvenance } from './provenance.mjs';
+import type { Report, Result, Sample } from './schema.js';
 // @ts-ignore JavaScript report writer is shared with node:test.
 import { writeReport } from './report.mjs';
 
@@ -35,53 +37,7 @@ function shuffled<T>(items: readonly T[]): T[] {
   }
   return copy;
 }
-const large = new Set([
-  'array-visible-row',
-  'array-offscreen-row',
-  'normalized-row',
-  'append',
-  'map-and-replace',
-  'filter-sort',
-  'immutable-input-filter',
-  'api-payload',
-  'api-frozen',
-  'array-remove',
-  'array-reorder',
-  'bulk-rows-100',
-]);
-const cases: Case[] = workloads.flatMap((workload) =>
-  (workload === 'full-list-row'
-    ? quick
-      ? [1000]
-      : [1000, 5000]
-    : large.has(workload)
-      ? quick
-        ? [1000, 10000]
-        : [1000, 10000, 50000]
-      : [1000]
-  ).map((size) => ({
-    workload,
-    size,
-    operations,
-    consumers:
-      workload === 'full-list-row'
-        ? size
-        : [
-              'shared-fanout',
-              'array-visible-row',
-              'array-offscreen-row',
-              'normalized-row',
-              'map-and-replace',
-              'api-payload',
-              'api-frozen',
-              'array-reorder',
-              'bulk-rows-100',
-              'parent-rerender',
-            ].includes(workload)
-          ? 100
-          : 1,
-  })),
-);
+const cases = benchmarkCases(operations, quick);
 const workloadOption = args.indexOf('--workload');
 const selected = workloadOption < 0 ? undefined : new Set(args[workloadOption + 1]?.split(','));
 if (selected && (!selected.size || [...selected].some((name) => !workloads.includes(name as any))))
@@ -102,6 +58,7 @@ async function version(name: string) {
   return JSON.parse(await readFile(require.resolve(`${name}/package.json`), 'utf8')).version;
 }
 await build({ configFile: resolve('benchmarks/vite.config.ts'), logLevel: 'warn' });
+const provenance = await benchmarkProvenance();
 const server = await preview({
   configFile: resolve('benchmarks/vite.config.ts'),
   logLevel: 'warn',
@@ -142,7 +99,7 @@ try {
         ] as const)
           if (!Number.isFinite(sample[key]) || sample[key] < 0)
             throw new Error(`Invalid ${key} from ${library}`);
-        if (trial >= 0) byLibrary[library].samples.push(sample);
+        if (trial >= 0) byLibrary[library].samples.push({ ...sample, block: trial });
       }
     }
     results.push(...libraries.map((library) => byLibrary[library]));
@@ -150,10 +107,20 @@ try {
       `Verified ${benchmarkCase.workload.padEnd(20)} ${String(benchmarkCase.size).padStart(6)} rows / ${benchmarkCase.consumers} consumers`,
     );
   }
+  const finalProvenance = await benchmarkProvenance();
+  if (
+    ['sourceHash', 'lockfileHash', 'buildHash'].some(
+      (field) =>
+        provenance[field as keyof typeof provenance] !==
+        finalProvenance[field as keyof typeof finalProvenance],
+    )
+  )
+    throw new Error('Source, lockfile or production bundle changed during measurement');
   const report: Report = {
     schemaVersion: 1,
     timestamp: new Date().toISOString(),
     environment: {
+      provenance,
       frameworkVersion: JSON.parse(await readFile('packages/core/package.json', 'utf8')).version,
       node: process.version,
       platform: platform(),
@@ -180,6 +147,7 @@ try {
       seed,
       scheduling:
         'Controlled commit benchmark: one synchronous logical transaction, one microtask checkpoint, then the same React flushSync checkpoint for every library; timing includes notification delivery and DOM commits, excludes correctness checks. No frame or paint wait.',
+      coverage: { complete: selectedCases.length === cases.length && !quick, cases: selectedCases },
       limitations: [
         'Single machine, single browser process, sequential warmed runs; timings are not cross-device performance guarantees.',
         'Headless browser commit latency excludes paint, layout measurement, network, real API libraries and user-event dispatch.',

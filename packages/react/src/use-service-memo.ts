@@ -2,7 +2,7 @@
 'use no service tracking';
 
 import { useEffect, useMemo, useState, useSyncExternalStore, type DependencyList } from 'react';
-import { collectDependencies, type Dependency } from '@kinstate/core';
+import type { Dependency } from '@kinstate/core';
 import type { RenderFrame } from './render-frame.js';
 import { MemoCache } from './memo-cache.js';
 
@@ -28,8 +28,8 @@ export function useServiceMemo<T>(
     () => {
       const observed = new Map<Dependency, number>();
       try {
-        const captured = collectDependencies(factory, observed);
-        return { outcome: { ok: true, value: captured.value }, dependencies: observed };
+        const value = frame.captureMemo(factory, observed);
+        return { outcome: { ok: true, value }, dependencies: observed };
       } catch (error) {
         // Initialize React's memo cell even when a caller catches the factory error.
         return { outcome: { ok: false, error }, dependencies: observed };

@@ -48,6 +48,8 @@ Props mode reserves PascalCase function bindings and default function exports fo
 
 Synchronous reads, getters, method calls, conditional expressions, optional chains, membership, iteration, spreads, arrays and ordinary destructuring are instrumented while preserving evaluation order and receivers. Standard React `memo` and `forwardRef` wrappers are recognized, including supported import aliases and imported compiled receivers.
 
+Receiving-component mode also binds compiled components to cached implicit React.memo wrappers. Stable-prop children can skip parent-driven renders; their own property subscriptions, context and local state remain active. No custom comparator suppresses changed callback/children identities. Components must satisfy React purity rules, and emitted memo exotic tokens must be rendered through JSX/createElement. Known authored memo wrappers retain their comparator without another implicit layer. Named/default exports, declaration hoisting and React Refresh registration retain the final receiving binding.
+
 Instrumentation opts components out of React Compiler optimization with its documented `use no memo` directive. That avoids claiming interoperability with optimizations not verified for this protocol.
 
 ## Diagnostics and boundaries

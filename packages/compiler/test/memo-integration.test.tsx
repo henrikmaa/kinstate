@@ -411,8 +411,8 @@ describe('compiled memo dependency replay', () => {
         `import {useMemo} from 'react';function View(){return <span>{useMemo(compute,${dependencyList})}</span>}`,
         { compute: () => ++computations },
       );
-      const view = render(<View />);
-      view.rerender(<View />);
+      const view = render(<View tick={0} />);
+      view.rerender(<View tick={1} />);
       expect(computations).toBe(2);
     },
   );

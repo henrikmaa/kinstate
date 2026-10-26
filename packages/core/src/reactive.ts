@@ -2,6 +2,12 @@ import { Atom, Computed, isCollecting, markMutation } from './dependencies.js';
 import { batch } from './scheduler.js';
 import { unwrapReadonlyView } from './readonly-views.js';
 import { arrayIterationNative, createArrayIteration, isArrayIndex } from './array-iteration.js';
+import { createArrayReverse } from './array-reverse.js';
+import {
+  createOwnedStateCopier,
+  isOwnedStateTarget,
+  hasCustomArrayClassPrototype,
+} from './owned-state.js';
 
 /** Own canonical proxy identity and observable metadata for the lifetime of each target. */
 class Metadata {
@@ -11,7 +17,6 @@ class Metadata {
   private computedValues?: Map<PropertyKey, Computed>;
   private boundMethods?: WeakMap<Function, Function>;
   private externalKeys?: Set<PropertyKey>;
-  private immutableKeys?: Set<PropertyKey>;
   private sequence?: Atom;
   readSequence(): void {
     (this.sequence ??= new Atom()).read();
@@ -38,9 +43,6 @@ class Metadata {
   }
   get externalInputKeys(): Set<PropertyKey> {
     return (this.externalKeys ??= new Set());
-  }
-  get immutableInputKeys(): Set<PropertyKey> {
-    return (this.immutableKeys ??= new Set());
   }
   clearComputed(key: PropertyKey): void {
     this.computedValues?.delete(key);
@@ -81,6 +83,23 @@ const finalizedAtoms = new FinalizationRegistry<{
  */
 export class PropertyAtoms {
   private readonly entries: AtomEntries = new Map();
+  // Entries retain inactive nodes weakly. Keys/entries occupy only two slots;
+  // hitting the second slot needs no map lookup or cache promotion writes.
+  private recentKey?: PropertyKey;
+  private recent?: AtomEntry;
+  private previousKey?: PropertyKey;
+  private previous?: AtomEntry;
+  private entry(key: PropertyKey): AtomEntry | undefined {
+    const found = this.entries.get(key);
+    if (found) this.remember(key, found);
+    return found;
+  }
+  private remember(key: PropertyKey, entry: AtomEntry): void {
+    this.previousKey = this.recentKey;
+    this.previous = this.recent;
+    this.recentKey = key;
+    this.recent = entry;
+  }
   get size(): number {
     return this.entries.size;
   }
@@ -89,7 +108,12 @@ export class PropertyAtoms {
   }
   read(key: PropertyKey): void {
     if (!isCollecting()) return;
-    const entry = this.entries.get(key);
+    const entry =
+      this.recent && this.recentKey === key
+        ? this.recent
+        : this.previous && this.previousKey === key
+          ? this.previous
+          : this.entry(key);
     const node = entry?.observed ?? entry?.reference.deref() ?? this.create(key);
     node.read();
   }
@@ -105,11 +129,24 @@ export class PropertyAtoms {
     const reference = new WeakRef(node);
     created.reference = reference;
     this.entries.set(key, created);
+    this.remember(key, created);
     finalizedAtoms.register(node, { entries, key, reference });
     return node;
   }
+  /** Includes captured inactive nodes; lazy computed/version readers still own them. */
+  forEachExisting(visit: (key: PropertyKey, node: Atom) => void): void {
+    for (const [key, entry] of this.entries) {
+      const node = entry.observed ?? entry.reference.deref();
+      if (node) visit(key, node);
+    }
+  }
   changed(key: PropertyKey): void {
-    const entry = this.entries.get(key);
+    const entry =
+      this.recent && this.recentKey === key
+        ? this.recent
+        : this.previous && this.previousKey === key
+          ? this.previous
+          : this.entry(key);
     const node = entry?.observed ?? entry?.reference.deref();
     if (node) node.changed();
     else markMutation();
@@ -136,6 +173,43 @@ function unwrap<T>(value: T): T {
     ? ((handlers.get(source)?.target ?? source) as T)
     : source;
 }
+function canonicalValue(value: object): object | undefined {
+  const handler = handlers.get(value);
+  return handler &&
+    (value === handler.proxy || isOwnedStateTarget(value) || serviceTargets.has(value))
+    ? handler.proxy
+    : undefined;
+}
+function stateCopier() {
+  return createOwnedStateCopier(
+    (value) => canonicalValue(unwrapReadonlyView(value)),
+    (target) => wrapObject(target),
+  );
+}
+function ownedValue<T>(value: T): T {
+  const source = unwrapReadonlyView(value);
+  if (source === null || typeof source !== 'object') return source;
+  const existing = canonicalValue(source);
+  if (existing) return existing as T;
+  if (isOwnedStateTarget(source)) return source;
+  const copier = stateCopier();
+  const next = copier.copy(source);
+  copier.finish();
+  return next;
+}
+
+/** Private scope protocol: prepare every field before publishing any updates. */
+export function prepareReactiveInputs(
+  values: Readonly<Record<string, unknown>>,
+): Readonly<Record<string, unknown>> {
+  const copier = stateCopier();
+  const prepared: Record<string, unknown> = Object.create(null);
+  for (const [key, value] of Object.entries(values))
+    prepared[key] = copier.copy(unwrapReadonlyView(value));
+  copier.finish();
+  return prepared;
+}
+
 function changeValue(state: Metadata | undefined, key: PropertyKey): void {
   if (state) {
     state.clearComputed(key);
@@ -162,8 +236,10 @@ function wrapObject<T extends object>(value: T): T {
   const prototype = Object.getPrototypeOf(value);
   const isService = serviceTargets.has(value);
   const isArray = Array.isArray(value);
+  if (!isService && isArray && hasCustomArrayClassPrototype(prototype)) return value;
   if (!isService && !isArray && prototype !== Object.prototype && prototype !== null) return value;
-  if (!Object.isExtensible(value)) return value;
+  if (!Object.isExtensible(value) && (!isOwnedStateTarget(value) || Object.isFrozen(value)))
+    return value;
   const handler = new ReactiveHandler(value, isService, isArray);
   const proxy = new Proxy<T>(value, handler);
   handler.proxy = proxy;
@@ -189,18 +265,15 @@ export function applyReactiveInputs(
   instance: object,
   values: Readonly<Record<string, unknown>>,
 ): boolean {
+  const prepared = prepareReactiveInputs(values);
   let changed = false;
-  for (const [key, value] of Object.entries(values)) {
-    const state = meta(unwrap(instance));
+  const state = meta(unwrap(instance));
+  for (const [key, value] of Object.entries(prepared)) {
     const wasExternal = state.externalInputKeys.has(key);
     state.externalInputKeys.add(key);
-    const wasImmutable = state.immutableInputKeys.has(key);
-    const immutable = value !== null && typeof value === 'object' && !isReactive(value);
-    if (immutable) state.immutableInputKeys.add(key);
-    else state.immutableInputKeys.delete(key);
     const previous = Object.getOwnPropertyDescriptor(instance, key)!.value;
-    if (Object.is(previous, unwrap(value))) {
-      if ((!wasExternal && typeof previous === 'function') || wasImmutable !== immutable) {
+    if (Object.is(previous, value)) {
+      if (!wasExternal && typeof previous === 'function') {
         state.values.changed(key);
         changed = true;
       }
@@ -217,6 +290,7 @@ export function applyReactiveInputs(
 class ReactiveHandler implements ProxyHandler<object> {
   proxy!: object;
   private state?: Metadata;
+  private shapeVersion = 0;
   // Descriptor changes evict ordinary own-data classifications before the next read.
   private readonly dataProperties = new Set<PropertyKey>();
   constructor(
@@ -282,6 +356,36 @@ class ReactiveHandler implements ProxyHandler<object> {
             if (isCollecting()) state.readSequence();
           },
         );
+        method ??= createArrayReverse(
+          target as unknown[],
+          receiver,
+          result,
+          isCollecting,
+          (value) =>
+            typeof value !== 'function' &&
+            (Object.is(canonicalValue(value as object), value) || Object.is(unwrap(value), value)),
+          (reverse) => {
+            const observed: { key: string; node: Atom; previous: unknown }[] = [];
+            state.values.forEachExisting((key, node) => {
+              if (isArrayIndex(key) && Number(key) < (target as unknown[]).length)
+                observed.push({ key, node, previous: Reflect.get(target, key) });
+            });
+            reverse();
+            batch(() => {
+              // Even arrays with no remaining property subscribers invalidate
+              // lazy graph checkpoints after their raw storage changes.
+              markMutation();
+              for (const { key, node, previous } of observed) {
+                if (!Object.is(previous, Reflect.get(target, key))) {
+                  state.clearComputed(key);
+                  node.changed();
+                }
+              }
+              state.changeSequence('0');
+            });
+          },
+          isOwnedStateTarget(target) ? () => this.shapeVersion : undefined,
+        );
         if (method) state.methods.set(result, method);
       }
       if (method) return method;
@@ -297,9 +401,6 @@ class ReactiveHandler implements ProxyHandler<object> {
       }
       return bound;
     }
-    if (isService && ownData && this.getState(target).immutableInputKeys.has(key)) {
-      return result;
-    }
     return wrap(result);
   }
   set(target: object, key: PropertyKey, next: unknown, receiver: any): boolean {
@@ -314,13 +415,14 @@ class ReactiveHandler implements ProxyHandler<object> {
       });
     if (own && 'value' in own && receiver === this.proxy && !(isArray && key === 'length')) {
       if (!own.writable) return false;
-      const normalized = unwrap(next);
+      const normalized = ownedValue(next);
       if (Object.is(own.value, normalized)) return true;
       if (!Reflect.defineProperty(target, key, { value: normalized })) return false;
+      if (isArray && isArrayIndex(key)) this.shapeVersion++;
       changeValue(state, key);
       return true;
     }
-    return Reflect.set(target, key, unwrap(next), receiver);
+    return Reflect.set(target, key, receiver === this.proxy ? ownedValue(next) : next, receiver);
   }
   defineProperty(target: object, key: PropertyKey, next: PropertyDescriptor): boolean {
     const { dataProperties, isService, isArray } = this;
@@ -334,7 +436,16 @@ class ReactiveHandler implements ProxyHandler<object> {
             (k) => isArrayIndex(k) && Object.hasOwn(target, k),
           )
         : [];
-    const normalized = 'value' in next ? { ...next, value: unwrap(next.value) } : next;
+    const normalized = 'value' in next ? { ...next, value: ownedValue(next.value) } : next;
+    const pinned =
+      !(next.configurable ?? previous?.configurable ?? false) &&
+      !(next.writable ?? (previous && 'value' in previous ? previous.writable : false));
+    if (pinned && 'value' in next && !Object.is(next.value, normalized.value))
+      throw new TypeError(
+        'Fresh raw object values cannot be copied into non-configurable, non-writable descriptors. Publish ordinary state before pinning its existing canonical value.',
+      );
+    // Invalidate before ArraySetLength: even failed length writes can partially delete indices.
+    if (isArray && (key === 'length' || isArrayIndex(key))) this.shapeVersion++;
     const applied = Reflect.defineProperty(target, key, normalized);
     // ArraySetLength can delete higher indices and shorten length before a
     // non-configurable index makes the operation fail. Publish actual changes
@@ -349,7 +460,7 @@ class ReactiveHandler implements ProxyHandler<object> {
       ((after.value !== null &&
         typeof after.value === 'object' &&
         handlers.has(after.value) &&
-        !(isService && state?.immutableInputKeys.has(key))) ||
+        handlers.get(after.value)?.proxy !== after.value) ||
         (isService &&
           typeof after.value === 'function' &&
           key !== 'constructor' &&
@@ -392,6 +503,7 @@ class ReactiveHandler implements ProxyHandler<object> {
     const existed = Object.hasOwn(target, key);
     if (!Reflect.deleteProperty(target, key)) return false;
     if (existed) {
+      if (this.isArray && isArrayIndex(key)) this.shapeVersion++;
       changeValue(state, key);
       changeExistence(state, key);
       changeKeys(state);

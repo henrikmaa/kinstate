@@ -8,7 +8,7 @@ The Rspress 2.0.23 documentation site builds 21 static pages including the 404 p
 
 The initial Next verification used `next/babel`, which disabled SWC and did **not** establish SWC compatibility. The replacement `@kinstate/compiler/next` adapter runs instrumentation before Next's SWC pipeline. The maintained example no longer contains a Babel config. A clean packed Next/Webpack consumer builds with the emitted loader, local font and legacy TypeScript decorator syntax; normal core/React declaration checks retain `skipLibCheck: false`, while the isolated Next application uses Next's generated TypeScript configuration. This checks the adapter against normal Next consumption without treating Next's own declaration errors as Kinstate declarations.
 
-New regressions cover hook-shaped method aliases through `satisfies`/instantiation/parentheses, computed parameter-key lexical scope, and service normalization of committed React inputs. Unsafe parameter keys receive a precise compile diagnostic; safe literal/outer-scope keys keep their behavior. Input bridge refreshes no longer reassert the same snapshot and cause a layout loop; later provider commits still publish their values.
+New regressions cover hook-shaped method aliases through `satisfies`/instantiation/parentheses, computed parameter-key lexical scope, and service normalization of committed React inputs. Unsafe parameter keys receive a precise compile diagnostic; safe literal/outer-scope keys keep their behavior. Input bridge refreshes no longer reassert the same snapshot and cause a layout loop; later source-value changes publish new values; unchanged sources preserve service normalization and local edits.
 
 | Check | Result |
 |---|---|

@@ -9,7 +9,7 @@ export class MemoCache {
   private dependencies: ReadonlyMap<Dependency, number> = new Map();
   private checked = new Map<Dependency, number>();
   private readonly listeners = new Set<() => void>();
-  private stops: (() => void)[] = [];
+  private readonly stops = new Map<Dependency, () => void>();
   private snapshot: Snapshot = Object.freeze({ revision: 0 });
   private readonly serverSnapshot = this.snapshot;
 
@@ -46,10 +46,18 @@ export class MemoCache {
   publish(dependencies: ReadonlyMap<Dependency, number>): void {
     if (this.dependencies === dependencies) return;
     const before = this.snapshot;
+    const previousDependencies = this.dependencies;
+    const previousChecked = this.checked;
     this.dependencies = dependencies;
     this.checked = new Map();
-    this.disconnect();
-    this.connect();
+    try {
+      this.connect();
+    } catch (error) {
+      this.dependencies = previousDependencies;
+      this.checked = previousChecked;
+      this.snapshot = before;
+      throw error;
+    }
     if (this.getSnapshot() !== before) this.notify();
   }
 
@@ -59,17 +67,27 @@ export class MemoCache {
 
   private connect(): void {
     if (!this.listeners.size) return;
+    // Commit publication usually retains the same large dependency set. Keep
+    // those subscriptions; prepare new edges before removing the old branch.
+    const added = new Map<Dependency, () => void>();
     try {
       for (const dependency of this.dependencies.keys())
-        this.stops.push(dependency.subscribe(this.notify));
+        if (!this.stops.has(dependency)) added.set(dependency, dependency.subscribe(this.notify));
     } catch (error) {
-      this.disconnect();
+      for (const stop of added.values()) stop();
       throw error;
     }
+    for (const [dependency, stop] of this.stops) {
+      if (!this.dependencies.has(dependency)) {
+        stop();
+        this.stops.delete(dependency);
+      }
+    }
+    for (const [dependency, stop] of added) this.stops.set(dependency, stop);
   }
 
   private disconnect(): void {
-    for (const stop of this.stops) stop();
-    this.stops = [];
+    for (const stop of this.stops.values()) stop();
+    this.stops.clear();
   }
 }

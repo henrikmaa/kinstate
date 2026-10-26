@@ -109,6 +109,8 @@ For an existing Babel pipeline, add `module:@kinstate/compiler` to `plugins` whi
 
 Consumers must be synchronous function components, including supported React `memo`/`forwardRef` forms. Call `useService` directly in the component and assign its result to a local variable. Custom-hook consumption is diagnosed. Each consuming component should resolve its own service; see [compiler limitations](docs/LIMITATIONS.md) before passing reactive data through component props or memoization.
 
+Receiving-component mode also inserts implicit React.memo boundaries: stable-prop children can skip parent-driven renders while keeping their own property, context, and local-state updates. Components must follow ordinary React purity rules; emitted component tokens are rendered through JSX/createElement. Changed callback or children identities retain React's normal shallow-prop behavior.
+
 With `reactiveProps: true` for client source (or selected `'client'` modules), ordinary imported React `useMemo` callbacks may read service/live-prop state. The compiler preserves their observable dependencies across cache hits and invalidates them when those reads change. Keep non-service React inputs in the authored dependency array and keep factories synchronous and pure. Legacy compiler mode retains concealed-read diagnostics. See [memoization and composition](docs/COMPOSITION.md).
 
 ## Live inputs from any React state source
@@ -149,7 +151,7 @@ Callback inputs use the same binding. Pass a function returned by another hook a
 
 A previously detached callback remains a snapshot of that function. A stable bound service method that reads `this.onSave` uses the latest committed input. `useCallback` is optional, useful only when the source needs stable callback identity. Use ordinary callback fields initialized to `undefined` or a default function; prototype methods and lifecycle hooks cannot be replaced. A stable callback reading hidden external mutable state does not invalidate computed getters—pass that state as another input if computations depend on it.
 
-Object inputs are borrowed immutable references: do not mutate another library's cache through a service. Keep edits in a local draft and send updates through the originating library's normal API. Replacing input values/references is observed with `Object.is`; external in-place mutations are not a change signal. An externally supplied scope receives bindings at commit; preseed it with `new ServiceScope([UserService], { inputs: [serviceInputs(UserService, values)] })` when its initial render or SSR must already contain those values.
+Plain objects and arrays become service-owned copies, so service methods can edit mutable input data without mutating another library's cache. Each field is published when its source value changes by `Object.is`; unchanged references preserve service edits across parent renders. External in-place mutations are not a change signal. Use the originating library's normal API to save edits back, and keep separate drafts when edits must survive refetch replacements. An externally supplied scope receives bindings at commit; preseed it with `new ServiceScope([UserService], { inputs: [serviceInputs(UserService, values)] })` when its initial render or SSR must already contain those values.
 
 ## Dependency injection and scopes
 

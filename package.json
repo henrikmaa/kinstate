@@ -28,7 +28,7 @@
     "check": "npm run typecheck && npm test && npm run check:boundaries && npm run format:check && node scripts/check-hooks.mjs && npm run bench:test && npm run bench:typecheck && npm run test:packages && npm run test:git",
     "check:hooks": "npm run build && node scripts/check-hooks.mjs",
     "bench:quick": "npm run build && tsx benchmarks/run.tsx --quick",
-    "bench:test": "node --test benchmarks/report.test.mjs",
+    "bench:test": "node --import tsx --test benchmarks/*.test.mjs benchmarks/*.test.ts",
     "bench:typecheck": "tsc -p benchmarks/tsconfig.json",
     "bench:smoke": "npm run build && tsx benchmarks/smoke.mjs",
     "format": "prettier --write \"packages/{core,react,compiler,tests}/**/*.{ts,tsx,mjs,cts}\" \"benchmarks/**/*.{ts,tsx,mjs,css}\" \"scripts/*.mjs\" \"website/**/*.{ts,tsx,mjs,cjs,css}\" \"distribution/src/**/*.ts\"",

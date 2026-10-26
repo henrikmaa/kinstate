@@ -315,9 +315,16 @@ describe('reactive core', () => {
       state: Readonly<{ value: number }> = raw;
     }
     const service = new Frozen();
-    expect(service.state).toBe(raw);
-    Object.defineProperty(service, 'locked', { value: raw, writable: false, configurable: false });
-    expect(Reflect.get(service, 'locked')).toBe(raw);
+    const snapshot = service.state;
+    expect(snapshot).not.toBe(raw);
+    expect(snapshot).toEqual(raw);
+    expect(Object.isFrozen(snapshot)).toBe(true);
+    Object.defineProperty(service, 'locked', {
+      value: snapshot,
+      writable: false,
+      configurable: false,
+    });
+    expect(Reflect.get(service, 'locked')).toBe(snapshot);
     expect(() => Reflect.ownKeys(Object.freeze(service))).not.toThrow();
     expect(() => {
       service.state = { value: 3 };

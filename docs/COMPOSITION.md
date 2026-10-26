@@ -72,3 +72,9 @@ Recognized React memo/forwardRef wrappers preserve their actual wrapper identity
 Props mode reserves PascalCase function bindings and default function exports for components in selected source. Keep ordinary utility functions outside that convention. The explicit `'use no service tracking'` module directive excludes infrastructure from props-mode discovery; it does not exempt explicit service consumption from normal tracking and diagnostics.
 
 The Vite example has independent parent/child render counters and an imported receiver. Browser tests verify that editing its live row updates the child without rerendering its parent, and that a render callback updates independently.
+
+## Parent renders and implicit memo boundaries
+
+With receiving-component mode enabled, the compiler supplies React.memo for actual compiled component bindings. A parent updating guide lines, hover UI, or other local presentation state need not rerun stable-prop child bodies. Property-level subscriptions still update the specific child whose observed state changed, and React context/local state bypass memo normally. There is no custom prop comparator: changed callbacks, children, or object references retain React's normal shallow-comparison behavior.
+
+Write pure React components and render component tokens through JSX/createElement. Generated tokens are React.memo exotic components; they are not ordinary helper functions. Directly invoked uppercase utilities remain utilities. Existing authored memo/forwardRef forms are respected, including custom memo comparators. Declaration hoisting, named/default exports, and final React Refresh bindings are covered by integration tests. Defining a component inside another render still creates a new implementation identity and retains React's usual remount behavior.

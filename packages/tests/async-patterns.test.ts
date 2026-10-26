@@ -37,7 +37,9 @@ function execute(body: string, inputs: Record<string, unknown>) {
     `${code};return Fixture;`,
   )(
     () => frame,
-    () => {},
+    // This harness executes emitted bodies outside React; memo integration is
+    // tested with the real dispatcher in compiler/implicit-memo.test.tsx.
+    (component: unknown) => component,
     ...Object.values(inputs),
   );
   return { run: fixture(), isTracking: () => tracking > 0 };

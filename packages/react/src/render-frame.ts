@@ -12,13 +12,29 @@ export class RenderFrame {
   private snapshot: Snapshot = Object.freeze({ revision: 0 });
   private readonly serverSnapshot: Snapshot = this.snapshot;
   private open = true;
+  private memoDestination: Map<Dependency, number> | undefined;
 
   track<T>(read: () => T): T {
     if (!this.open) return read();
     // Publish reads to this attempt's map even when user code throws. A locally
     // caught getter/helper failure renders a fallback that depends on those reads.
     // The collector preserves earliest versions for subscription-time validation.
-    return collectInto(read, this.dependencies);
+    return collectInto(read, this.memoDestination ?? this.dependencies);
+  }
+
+  /**
+   * A synchronous memo calculation owns its observation map. Reuse that same map
+   * for nested compiled reads instead of bouncing between memo/frame collectors.
+   * This override belongs to this attempt, never to a global React render frame.
+   */
+  captureMemo<T>(factory: () => T, destination: Map<Dependency, number>): T {
+    const previous = this.memoDestination;
+    this.memoDestination = destination;
+    try {
+      return collectInto(factory, destination);
+    } finally {
+      this.memoDestination = previous;
+    }
   }
 
   /** Replay cached memo reads without replacing this attempt's earliest versions. */

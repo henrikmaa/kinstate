@@ -34,15 +34,30 @@ export async function runBenchmark(library: Library, test: Case): Promise<Sample
   const root = createRoot(element);
   let rerender: (() => void) | undefined;
   function Parent() {
-    const [, update] = useState(0);
+    const [tick, update] = useState(0);
     rerender = () => update((value) => value + 1);
     const children = Array.from({ length: test.consumers }, (_, index) => (
-      <adapter.Consumer key={index} index={index} workload={test.workload} stats={stats} />
+      <adapter.Consumer
+        key={index}
+        index={index}
+        workload={test.workload}
+        stats={stats}
+        source={adapter.source}
+        tick={test.workload === 'memo-local-render' ? tick : 0}
+      />
     ));
-    return <>{adapter.wrap ? adapter.wrap(children) : children}</>;
+    return <>{adapter.wrap ? adapter.wrap(children, adapter.context) : children}</>;
   }
+  const persistenceKey = 'kinstate-comparison-persist-json';
   let unmounted = false;
   try {
+    if (test.workload === 'persist-json') {
+      // Verify native quota/storage access before timing, with the same projection.
+      localStorage.setItem(
+        persistenceKey,
+        JSON.stringify({ count: adapter.state.count, rows: adapter.state.rows }),
+      );
+    }
     let started = performance.now();
     flushSync(() => root.render(<Parent />));
     await settle();
@@ -51,8 +66,14 @@ export async function runBenchmark(library: Library, test: Case): Promise<Sample
     started = performance.now();
     for (let operation = 0; operation < test.operations; operation++) {
       flushSync(() => {
-        if (test.workload === 'parent-rerender') rerender!();
+        if (test.workload === 'parent-rerender' || test.workload === 'memo-local-render')
+          rerender!();
         else adapter.mutate(operation);
+        if (test.workload === 'persist-json')
+          localStorage.setItem(
+            persistenceKey,
+            JSON.stringify({ count: adapter.state.count, rows: adapter.state.rows }),
+          );
       });
       await settle();
     }
@@ -95,6 +116,12 @@ export async function runBenchmark(library: Library, test: Case): Promise<Sample
     }
     if (Object.keys(actualState.records).length !== Object.keys(reference.records).length)
       throw new Error(`${library}/${test.workload}: incorrect record key count`);
+    if (
+      test.workload === 'persist-json' &&
+      localStorage.getItem(persistenceKey) !==
+        JSON.stringify({ count: reference.count, rows: reference.rows })
+    )
+      throw new Error(`${library}/${test.workload}: incorrect persisted JSON`);
     const spans = [...element.querySelectorAll('span')];
     if (spans.length !== test.consumers)
       throw new Error(`${library}/${test.workload}: incorrect consumer count`);
@@ -128,6 +155,7 @@ export async function runBenchmark(library: Library, test: Case): Promise<Sample
   } finally {
     if (!unmounted) flushSync(() => root.unmount());
     adapter.dispose?.();
+    if (test.workload === 'persist-json') localStorage.removeItem(persistenceKey);
     element.remove();
   }
 }

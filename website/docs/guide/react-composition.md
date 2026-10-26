@@ -88,3 +88,7 @@ Keep callbacks that read a live service in compiled receiving components, or mat
 Props mode reserves PascalCase function bindings and default function exports in selected source for components. Keep utilities outside that convention. Immutable identifier JSX targets are supported; mutable/member targets and async render callbacks remain guarded. Some parameter defaults and rest forms need moving into the body. Read [limitations](limitations.md) before distributing component libraries; dependencies must be precompiled because the plugin excludes `node_modules`.
 
 For App Router, use `reactiveProps: 'client'` and mark receiving modules `'use client'`. See [Next.js and SSR](nextjs-and-ssr.md).
+
+## Stable-prop children
+
+Receiving-component mode adds implicit React.memo boundaries. Parent local-state changes can skip stable-prop children while their own observed properties, context, and local state continue to update. Components must be pure React components and be rendered through JSX/createElement; generated component tokens are memo exotic components. Changed callbacks and children retain ordinary shallow-prop behavior. Existing authored memo comparators and forwardRef remain supported; no application wrapper is required.

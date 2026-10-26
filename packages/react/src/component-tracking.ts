@@ -1,10 +1,23 @@
+import { memo, type ComponentType } from 'react';
+
 /** Private compiler ABI: only an instrumented receiver may observe live prop reads. */
 const receivers = new WeakSet<object>();
 const wrappers = new WeakMap<object, unknown>();
+const memoized = new WeakMap<object, object>();
+const implicitMemos = new WeakSet<object>();
 
-export function markReactiveComponent<T extends object>(component: T): T {
+export function markReactiveComponent<T extends object>(component: T, memoize = false): T {
   receivers.add(component);
-  return component;
+  if (!memoize || implicitMemos.has(component)) return component;
+  const cached = memoized.get(component);
+  if (cached) return cached as T;
+  // Only compiler-proven component bindings request memoization. React.memo
+  // retains their context, local state and external-store updates normally.
+  const wrapped = memo(component as unknown as ComponentType<any>);
+  receivers.add(wrapped);
+  implicitMemos.add(wrapped);
+  memoized.set(component, wrapped);
+  return wrapped as unknown as T;
 }
 
 /** Record an explicit compiler-proven React wrapper edge; no React object internals are inspected. */

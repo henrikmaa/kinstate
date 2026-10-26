@@ -56,12 +56,14 @@ describe('external service inputs', () => {
     expect(scope.applyInputs([])).toBe(false);
     expect(data.value).toBe(2);
     data.value = 3;
-    scope.applyInputs([serviceInputs(Data, { value: 2 })]);
-    expect(data.value).toBe(2);
+    expect(scope.applyInputs([serviceInputs(Data, { value: 2 })])).toBe(false);
+    expect(data.value).toBe(3);
+    scope.applyInputs([serviceInputs(Data, { value: 4 })]);
+    expect(data.value).toBe(4);
     stop();
     scope.dispose();
   });
-  it('takes a shallow snapshot and accepts frozen borrowed data', () => {
+  it('takes a binding snapshot and copies frozen input data without changing descriptors', () => {
     const payload = Object.freeze({ id: 5 });
     const values = { value: 4, payload };
     const binding = serviceInputs(Data, values);
@@ -71,7 +73,9 @@ describe('external service inputs', () => {
     const scope = new ServiceScope([Data], { inputs: [binding] });
     const data = scope.get(Data);
     expect(data.value).toBe(4);
-    expect(data.payload).toBe(payload);
+    expect(data.payload).not.toBe(payload);
+    expect(data.payload).toEqual(payload);
+    expect(Object.isFrozen(data.payload)).toBe(true);
     scope.dispose();
   });
   it('rejects duplicate bindings and invalid fields atomically without invoking accessors', () => {

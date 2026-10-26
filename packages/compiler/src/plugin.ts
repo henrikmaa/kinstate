@@ -91,8 +91,12 @@ export default function kinstatePlugin(_api: unknown, options: CompilerOptions =
           const component = prepareComponent(context, owner, calls);
           memoUsed = analyzeAndGuardComponent(component, memoHook) || memoUsed;
           instrumentComponent(component, frameHook);
-          if (marker) markComponent(owner, context.imports, marker);
         }
+        // Finalize bindings only after every analysis pass. Hoisted memo
+        // assignments must not look like authored mutable component aliases.
+        if (marker)
+          for (const owner of [...context.owners.keys()].reverse())
+            markComponent(owner, context.imports, marker);
         program.node.body.unshift(
           t.importDeclaration(
             [

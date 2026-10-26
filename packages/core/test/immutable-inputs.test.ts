@@ -22,15 +22,15 @@ class Data extends Service {
   }
 }
 
-describe('immutable external input boundary', () => {
-  it('preserves borrowed object identity and observes root replacements without proxying API collections', () => {
+describe('service-owned external input boundary', () => {
+  it('copies API collections and observes source replacements and service edits', () => {
     const rows = [{ id: 1, name: 'Ada' }];
     const scope = new ServiceScope([Data], { inputs: [serviceInputs(Data, { rows })] });
     const service = scope.get(Data);
-    expect(service.rows).toBe(rows);
-    expect(service.rows[0]).toBe(rows[0]);
-    expect(service.rows.filter((row) => row.id === 1)[0]).toBe(rows[0]);
-    expect(isReactive(service.rows)).toBe(false);
+    expect(service.rows).not.toBe(rows);
+    expect(service.rows[0]).not.toBe(rows[0]);
+    expect(service.rows.filter((row) => row.id === 1)[0]).toBe(service.rows[0]);
+    expect(isReactive(service.rows)).toBe(true);
     const seen = vi.fn(() => service.firstName);
     const stop = observe(seen);
     expect(scope.applyInputs([serviceInputs(Data, { rows })])).toBe(false);
@@ -41,7 +41,7 @@ describe('immutable external input boundary', () => {
     flushSync();
     expect(service.firstName).toBe('Grace');
     expect(seen).toHaveBeenCalledTimes(2);
-    expect(service.rows).toBe(replacement);
+    expect(service.rows).not.toBe(replacement);
     stop();
     scope.dispose();
   });
@@ -64,7 +64,7 @@ describe('immutable external input boundary', () => {
     scope.dispose();
   });
 
-  it('invalidates captured reads when ownership changes despite an unchanged stored raw value', () => {
+  it('publishes a fresh copy on the first external binding of an existing raw source', () => {
     const rows = [{ id: 1, name: 'Ada' }];
     const scope = new ServiceScope([Data]);
     const service = scope.get(Data);
@@ -82,7 +82,7 @@ describe('immutable external input boundary', () => {
       ),
     ).toBe(true);
     flushSync();
-    expect(service.rows).toBe(rows);
+    expect(service.rows).not.toBe(rows);
     expect(seen).toHaveBeenCalledTimes(2);
     expect(scope.applyInputs([serviceInputs(Data, { rows })])).toBe(false);
     flushSync();
@@ -91,7 +91,7 @@ describe('immutable external input boundary', () => {
     scope.dispose();
   });
 
-  it('preserves explicitly supplied canonical proxies and restores deep tracking on raw-to-proxy transitions', () => {
+  it('preserves explicitly supplied canonical proxies and their deep tracking', () => {
     const source = new Data();
     source.rows = [{ id: 1, name: 'Ada' }];
     const rowsProxy = source.rows;
@@ -136,7 +136,8 @@ describe('immutable external input boundary', () => {
     expect(scope.applyInputs([serviceInputs(Data, { rows })])).toBe(false);
     flushSync();
     expect(seen).toHaveBeenCalledTimes(1);
-    // Source-owned data must be replaced, not mutated behind the framework's back.
+    expect(service.firstName).toBe('Ada');
+    // Source changes enter the service only when a replacement is published.
     scope.applyInputs([serviceInputs(Data, { rows: [...rows] })]);
     flushSync();
     expect(service.firstName).toBe('outside-contract');

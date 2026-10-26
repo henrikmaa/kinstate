@@ -80,6 +80,8 @@ export function mutatePlain(
     case 'batch-100':
       for (let i = 0; i < 100; i++) state.count++;
       break;
+    case 'persist-json':
+    case 'reactive-prop-row':
     case 'array-visible-row':
     case 'full-list-row':
       state.rows[operation % consumers]!.value++;
@@ -122,12 +124,14 @@ export function mutatePlain(
         value: index === 0 ? operation + 1 : row.value,
       }));
       break;
+    case 'memo-filter':
     case 'filter-sort': {
       const row = state.rows[operation % state.rows.length]!;
       row.active = true;
       row.value += 100;
       break;
     }
+    case 'memo-local-render':
     case 'parent-rerender':
       break;
   }
@@ -139,12 +143,20 @@ export function filteredRows(rows: readonly Readonly<Row>[]): string[] {
     .slice(0, 100)
     .map((row) => `${row.id}:${row.value}`);
 }
-export function select(state: State, workload: Workload, index: number): string | number {
+export type ReadState = Omit<Readonly<State>, 'rows' | 'records'> & {
+  readonly rows: readonly Readonly<Row>[];
+  readonly records: Readonly<Record<number, Readonly<Row>>>;
+};
+export function select(state: ReadState, workload: Workload, index: number): string | number {
   switch (workload) {
+    case 'memo-local-render':
+      return state.count * 2;
     case 'conditional':
       return state.active ? state.count : state.other;
     case 'nested-field':
       return state.nested.value;
+    case 'persist-json':
+    case 'reactive-prop-row':
     case 'array-visible-row':
     case 'full-list-row':
     case 'array-offscreen-row':
@@ -159,6 +171,7 @@ export function select(state: State, workload: Workload, index: number): string 
     case 'append':
     case 'array-remove':
       return state.rows.length;
+    case 'memo-filter':
     case 'filter-sort':
     case 'immutable-input-filter':
       return filteredRows(state.rows)[index] ?? '-';

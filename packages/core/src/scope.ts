@@ -1,5 +1,5 @@
 import { batch } from './scheduler.js';
-import { applyReactiveInputs } from './reactive.js';
+import { applyReactiveInputs, prepareReactiveInputs } from './reactive.js';
 import { validateInputBindings, validateInputFields, type ServiceInputBinding } from './inputs.js';
 import type {
   Service,
@@ -61,10 +61,25 @@ export class ServiceScope {
       instance: this.get(binding.service, { deferInitialization: true }),
     }));
     for (const { binding, instance } of updates) validateInputFields(instance, binding.values);
+    const publications = updates.map(({ binding, instance }) => {
+      const previous = this.inputs.get(binding.service);
+      // External identity is the publication boundary. Comparing against the
+      // owned instance would copy unchanged payloads on every provider commit
+      // and overwrite edits made by service commands.
+      const published: Record<string, unknown> = Object.create(null);
+      for (const [key, value] of Object.entries(binding.values)) {
+        if (!previous || !Object.hasOwn(previous, key) || !Object.is(previous[key], value))
+          published[key] = value;
+      }
+      return { binding, instance, values: prepareReactiveInputs(published) };
+    });
+    // Reflection over external payloads can execute Proxy traps. Finish all
+    // preparation and revalidate targets before publishing any observable state.
+    for (const { instance, values } of publications) validateInputFields(instance, values);
     return batch(() => {
       let changed = false;
-      for (const { binding, instance } of updates) {
-        changed = applyReactiveInputs(instance, binding.values) || changed;
+      for (const { binding, instance, values } of publications) {
+        changed = applyReactiveInputs(instance, values) || changed;
         this.inputs.set(binding.service, {
           ...this.inputs.get(binding.service),
           ...binding.values,
@@ -128,7 +143,7 @@ export class ServiceScope {
       );
       const initial = this.options.initialState?.find((entry) => entry.service === token);
       if (initial)
-        for (const [key, value] of Object.entries(initial.state)) {
+        for (const [key, value] of Object.entries(prepareReactiveInputs(initial.state))) {
           if (
             key === '__proto__' ||
             key === 'constructor' ||
