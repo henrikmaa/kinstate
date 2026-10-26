@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState, useSyncExternalStore, type DependencyList
 import type { Dependency } from '@kinstate/core';
 import type { RenderFrame } from './render-frame.js';
 import { MemoCache } from './memo-cache.js';
+import { MemoObservation } from './memo-observation.js';
 
 interface MemoResult<T> {
   readonly outcome:
     { readonly ok: true; readonly value: T } | { readonly ok: false; readonly error: unknown };
-  readonly dependencies: ReadonlyMap<Dependency, number>;
+  readonly observation: MemoObservation;
 }
 
 /**
@@ -29,18 +30,18 @@ export function useServiceMemo<T>(
       const observed = new Map<Dependency, number>();
       try {
         const value = frame.captureMemo(factory, observed);
-        return { outcome: { ok: true, value }, dependencies: observed };
+        return { outcome: { ok: true, value }, observation: new MemoObservation(observed, cache) };
       } catch (error) {
         // Initialize React's memo cell even when a caller catches the factory error.
-        return { outcome: { ok: false, error }, dependencies: observed };
+        return { outcome: { ok: false, error }, observation: new MemoObservation(observed, cache) };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     dependencies == null ? [{}] : [...dependencies, token],
   );
-  frame.adopt(result.dependencies);
+  frame.adopt(result.observation.frameDependencies);
   useEffect(() => {
-    cache.publish(result.dependencies);
+    cache.publish(result.observation.dependencies);
   }, [cache, result]);
   // Register every hook before rethrowing user errors or Suspense promises.
   if (!result.outcome.ok) throw result.outcome.error;

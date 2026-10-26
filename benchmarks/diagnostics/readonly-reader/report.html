@@ -1,0 +1,662 @@
+<!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Kinstate · React state benchmarks</title>
+        <style>
+          :root {
+  color-scheme: light;
+  --ink: #142b42;
+  --muted: #526679;
+  --line: #d7e1e8;
+  --paper: #fff;
+  --base: #f3f7fa;
+  --teal: #007e79;
+  --orange: #bd520d;
+  --blue: #396ec0;
+  --violet: #7558a1;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--base);
+  color: var(--ink);
+  font:
+    15px/1.55 -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+main {
+  max-width: 1180px;
+  margin: auto;
+  padding: 42px 32px 60px;
+}
+header {
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 25px;
+}
+h1 {
+  font-size: clamp(28px, 4vw, 43px);
+  line-height: 1.15;
+  letter-spacing: -1.3px;
+  margin: 0 0 14px;
+  font-weight: 720;
+}
+h2 {
+  font-size: 23px;
+  letter-spacing: -0.5px;
+  margin: 0 0 9px;
+}
+h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+p {
+  margin: 0 0 14px;
+  max-width: 78ch;
+}
+.intro {
+  color: var(--muted);
+  max-width: 68ch;
+}
+.date {
+  font-size: 13px;
+  color: var(--muted);
+}
+button,
+select {
+  font: inherit;
+  color: var(--ink);
+  background: white;
+  border: 1px solid #9fb1bf;
+  border-radius: 5px;
+  padding: 10px 13px;
+}
+button {
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:hover {
+  background: #e9f1f6;
+}
+button:focus-visible,
+select:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+.table-wrap:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 4px;
+}
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr;
+  gap: 18px;
+  padding: 26px 0;
+}
+label {
+  display: grid;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+}
+select {
+  width: 100%;
+  font-weight: 400;
+}
+.status {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.comparison {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 26px;
+  margin-bottom: 25px;
+}
+.case-meta {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 22px;
+}
+.bars {
+  display: grid;
+  gap: 16px;
+  margin: 23px 0 27px;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 140px;
+  gap: 15px;
+  align-items: center;
+}
+.bar-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+.track {
+  height: 20px;
+  background: #edf2f6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  min-width: 0;
+  background: var(--teal);
+  border-radius: 3px;
+}
+.bar-number {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-size: 13px;
+}
+.direction {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 4px 9px;
+  border: 1px solid #a2ceca;
+  border-radius: 4px;
+  background: #edf8f6;
+  color: #005f5b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.chart-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+.table-wrap {
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+caption {
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 0 10px;
+}
+th,
+td {
+  padding: 12px 13px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+}
+th:first-child,
+td:first-child {
+  text-align: left;
+  padding-left: 0;
+}
+th {
+  font-weight: 600;
+  background: #f7f9fb;
+}
+tbody tr:last-child td {
+  border: 0;
+}
+.swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin-right: 8px;
+}
+.notes {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 34px;
+  margin-top: 35px;
+}
+.notes p,
+.notes li {
+  font-size: 13px;
+  color: var(--muted);
+}
+ul {
+  padding-left: 20px;
+}
+details {
+  margin-top: 25px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  background: white;
+  border: 1px solid var(--line);
+  padding: 18px;
+  border-radius: 5px;
+}
+footer {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 35px;
+}
+.empty {
+  padding: 30px;
+  background: white;
+  border: 1px solid var(--line);
+}
+@media (max-width: 680px) {
+  main {
+    padding: 24px 16px;
+  }
+  header {
+    display: block;
+  }
+  header button {
+    margin-top: 15px;
+  }
+  .filters {
+    grid-template-columns: 1fr;
+  }
+  .comparison {
+    padding: 18px;
+  }
+  .notes {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .bar-row {
+    grid-template-columns: 85px 1fr 110px;
+    gap: 9px;
+  }
+  .bar-label,
+  .bar-number {
+    font-size: 12px;
+  }
+}
+
+        </style>
+      </head>
+      <body>
+        <main>
+          <header>
+            <div>
+              <p class="date">Kinstate · Ordinary classes. Reactive state.</p>
+              <h1>React state, measured.</h1>
+              <p class="intro">
+                Explore the cost of a specific update. Compare the same workload, collection size,
+                and consumer count across four libraries.
+              </p>
+              <div class="date">
+                2026-10-26T17:31:27.328Z · Production Chromium ·
+                5 repeated samples
+              </div>
+            </div>
+            <button id="download" type="button">Download raw JSON</button>
+          </header>
+          <section aria-label="Comparison filters" class="filters">
+            <label>Workload<select id="workload"></select></label
+            ><label>Collection size<select id="size"></select></label
+            ><label
+              >Metric<select id="metric">
+                <option value="update">Update time / operation (ms)</option>
+                <option value="startup">Startup: setup + mount (ms)</option>
+                <option value="setup">Store setup time (ms)</option>
+                <option value="mount">Mount time (ms)</option>
+                <option value="unmount">Unmount time (ms)</option>
+                <option value="renders">Render calls / operation</option>
+              </select></label
+            >
+          </section>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <div id="comparisons"></div>
+          <noscript
+            ><p class="empty">
+              Enable JavaScript to explore the embedded results. RESULTS.md contains the complete
+              static tables.
+            </p></noscript
+          >
+          
+          <section aria-label="Per-case MobX parity"><h2>Per-case MobX parity: inconclusive</h2>
+  <p>↓ Lower is better. Kinstate/MobX ratio; 1.05× is a 5% noninferiority tolerance, not exact equality. Every case and cost metric has its own verdict. Missing, historical, insufficient or uncertain data cannot pass. No overall timing average.</p>
+  <details><summary>Show all 15 comparisons (0 pass, 0 regression, 15 inconclusive)</summary>
+  <p>Nominal 95% family-wise order-statistic intervals with Bonferroni correction. These bounds assume independent matched blocks; serial browser runs can violate that assumption. They do not guarantee results on other machines or future runs.</p>
+  <div class="table-wrap" tabindex="0"><table><thead><tr><th>Workload</th><th>Size</th><th>Metric</th><th>Kinstate</th><th>MobX</th><th>Ratio</th><th>Interval</th><th>Verdict</th><th>Evidence / limitation</th></tr></thead><tbody><tr><td>filter-sort</td><td>50000</td><td>update</td><td>93.8200</td><td>51.0200</td><td>1.7695</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>filter-sort</td><td>50000</td><td>setup</td><td>280.5000</td><td>351.1000</td><td>0.7738</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>filter-sort</td><td>50000</td><td>mount</td><td>252.4000</td><td>60.7000</td><td>4.1038</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>filter-sort</td><td>50000</td><td>startup</td><td>543.7000</td><td>412.5000</td><td>1.3771</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>filter-sort</td><td>50000</td><td>unmount</td><td>7.7000</td><td>21.5000</td><td>0.3581</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>array-reorder</td><td>50000</td><td>update</td><td>6.1200</td><td>3.6200</td><td>1.6330</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>array-reorder</td><td>50000</td><td>setup</td><td>276.0000</td><td>351.4000</td><td>0.7764</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>array-reorder</td><td>50000</td><td>mount</td><td>2.7000</td><td>0.7000</td><td>4.0000</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks; Below 5 ms sample-duration floor; timing precision is insufficient</td></tr><tr><td>array-reorder</td><td>50000</td><td>startup</td><td>277.1000</td><td>352.2000</td><td>0.7830</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>array-reorder</td><td>50000</td><td>unmount</td><td>0.5000</td><td>0.4000</td><td>1.3333</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks; Below 5 ms sample-duration floor; timing precision is insufficient</td></tr><tr><td>memo-filter</td><td>50000</td><td>update</td><td>203.8400</td><td>49.3400</td><td>3.9984</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>memo-filter</td><td>50000</td><td>setup</td><td>289.2000</td><td>369.7000</td><td>0.7671</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>memo-filter</td><td>50000</td><td>mount</td><td>734.9000</td><td>53.7000</td><td>14.1327</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>memo-filter</td><td>50000</td><td>startup</td><td>1016.2000</td><td>421.7000</td><td>2.4098</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr><tr><td>memo-filter</td><td>50000</td><td>unmount</td><td>18.4000</td><td>21.1000</td><td>0.8288</td><td>—</td><td>inconclusive</td><td>Full current case coverage is not declared; Requires at least 21 independent trial blocks</td></tr></tbody></table></div></details></section>
+          <section class="notes" aria-label="Methodology and interpretation">
+            <div>
+              <h2>What was measured</h2>
+              <p>
+                Production React in Chromium with controlled commit checkpoints and consistent
+                flushSync scheduling across libraries. This measures controlled commit cost, not
+                natural event latency or concurrent scheduling. Each case receives
+                2 warmups and 5
+                repeated samples. Case order is randomized with seed
+                20261026.
+              </p>
+              <p>Controlled commit benchmark: one synchronous logical transaction, one microtask checkpoint, then the same React flushSync checkpoint for every library; timing includes notification delivery and DOM commits, excludes correctness checks. No frame or paint wait.</p>
+              <p>
+                Adapters use compiled useService, MobX observer, Zustand selectors with one
+                immutable publication per transaction, and Valtio snapshots scoped to stable
+                rows/nested objects. Collection replacement and derivation use root snapshots so
+                replaced data is observed.
+              </p>
+              <p>
+                Bars show the median. P95 is the nearest-rank percentile. For update time, P95 is
+                computed over per-sample average ms/op; it is not individual-operation latency P95.
+                The range preserves sample variation; update time and render calls are normalized by
+                operations. Mount and unmount measure the complete consumer tree.
+              </p>
+              <p>
+                Setup includes adapter/store construction and initial data allocation. Startup adds
+                setup and mount within each sample. Compare startup rather than mount alone:
+                libraries may initialize reactive data eagerly during setup or lazily during mount.
+              </p>
+            </div>
+            <div>
+              <h2>Read counts with context</h2>
+              <p>
+                <strong>Lower is better</strong> for time and render-call counts. Fewer renders
+                alone do not guarantee a faster update; check elapsed time too. Render calls are
+                component function executions during updates, not paints. Array dependency
+                strategies differ: MobX can legitimately rerender more array consumers. No overall
+                library ranking is computed.
+              </p>
+              <p>
+                These timings exclude browser paint, network latency, and virtualization libraries.
+              </p>
+              <ul>
+                <li>Single machine, single browser process, sequential warmed runs; timings are not cross-device performance guarantees.</li><li>Headless browser commit latency excludes paint, layout measurement, network, real API libraries and user-event dispatch.</li><li>Large arrays use a bounded visible window; this is not a virtualization-library benchmark.</li><li>Zustand uses one structurally shared immutable publication per transaction; proxy libraries mutate in place. Representation costs are included.</li><li>Results are scenario-specific. Do not combine different workloads into an overall winner.</li><li>Fresh stores and roots for every sample; setup and teardown are measured separately. No forced garbage collection; allocation and GC can affect outliers.</li>
+              </ul>
+            </div>
+          </section>
+          <p class="chart-note">
+            Methodology references:
+            <a href="https://react.dev/reference/react-dom/flushSync">React flushSync</a>,
+            <a href="https://mobx.js.org/understanding-reactivity.html">MobX reactivity</a>,
+            <a href="https://zustand.docs.pmnd.rs/learn/guides/immutable-state-and-merging"
+              >Zustand immutable updates</a
+            >, <a href="https://valtio.dev/docs/api/basic/useSnapshot">Valtio useSnapshot</a>.
+          </p>
+          <details>
+            <summary>Environment and package versions</summary>
+            <pre>{
+  &quot;provenance&quot;: {
+    &quot;commit&quot;: &quot;9fa25e691ba06f60ddff9019b6da7c57ef4a9c34&quot;,
+    &quot;dirty&quot;: true,
+    &quot;dirtyPaths&quot;: [
+      &quot;M packages/core/src/internal.ts&quot;,
+      &quot; M packages/core/src/reactive.ts&quot;,
+      &quot; M packages/react/src/service-view.ts&quot;,
+      &quot;?? packages/core/test/reactive-reader.test.ts&quot;
+    ],
+    &quot;sourceHash&quot;: &quot;e272a570a9b3097a8ff6fc508e667419c5c73644e994041f74f577143b66866e&quot;,
+    &quot;lockfileHash&quot;: &quot;60f1cfd79190a039061fea5b3b106d4a55c873a9ee18e3b58bb72881f5ca139e&quot;,
+    &quot;buildHash&quot;: &quot;b1e1e598b616f38166725aead6f68cd2bb0299419190ae8604d0c6421190ec78&quot;
+  },
+  &quot;frameworkVersion&quot;: &quot;0.1.0&quot;,
+  &quot;node&quot;: &quot;v24.16.0&quot;,
+  &quot;platform&quot;: &quot;linux&quot;,
+  &quot;arch&quot;: &quot;x64&quot;,
+  &quot;cpu&quot;: &quot;AMD Ryzen 7 3700X 8-Core Processor&quot;,
+  &quot;logicalCpus&quot;: 16,
+  &quot;memoryGiB&quot;: 31.3,
+  &quot;browser&quot;: &quot;156.0.8078.4&quot;,
+  &quot;userAgent&quot;: &quot;Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36&quot;,
+  &quot;mode&quot;: &quot;production&quot;,
+  &quot;renderer&quot;: &quot;React DOM in headless Chromium&quot;,
+  &quot;viewport&quot;: &quot;1280 × 800&quot;,
+  &quot;versions&quot;: {
+    &quot;react&quot;: &quot;19.3.1&quot;,
+    &quot;react-dom&quot;: &quot;19.3.1&quot;,
+    &quot;mobx&quot;: &quot;6.16.1&quot;,
+    &quot;mobx-react-lite&quot;: &quot;4.1.1&quot;,
+    &quot;zustand&quot;: &quot;5.0.15&quot;,
+    &quot;valtio&quot;: &quot;2.3.2&quot;,
+    &quot;vite&quot;: &quot;7.3.7&quot;
+  }
+}</pre>
+          </details>
+          <footer>
+            All samples are embedded in this file. Comparisons remain available offline; no external
+            scripts, fonts, or tracking.
+          </footer>
+        </main>
+        <script id="benchmark-data" type="application/json">
+          {"schemaVersion":1,"timestamp":"2026-10-26T17:31:27.328Z","environment":{"provenance":{"commit":"9fa25e691ba06f60ddff9019b6da7c57ef4a9c34","dirty":true,"dirtyPaths":["M packages/core/src/internal.ts"," M packages/core/src/reactive.ts"," M packages/react/src/service-view.ts","?? packages/core/test/reactive-reader.test.ts"],"sourceHash":"e272a570a9b3097a8ff6fc508e667419c5c73644e994041f74f577143b66866e","lockfileHash":"60f1cfd79190a039061fea5b3b106d4a55c873a9ee18e3b58bb72881f5ca139e","buildHash":"b1e1e598b616f38166725aead6f68cd2bb0299419190ae8604d0c6421190ec78"},"frameworkVersion":"0.1.0","node":"v24.16.0","platform":"linux","arch":"x64","cpu":"AMD Ryzen 7 3700X 8-Core Processor","logicalCpus":16,"memoryGiB":31.3,"browser":"156.0.8078.4","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36","mode":"production","renderer":"React DOM in headless Chromium","viewport":"1280 × 800","versions":{"react":"19.3.1","react-dom":"19.3.1","mobx":"6.16.1","mobx-react-lite":"4.1.1","zustand":"5.0.15","valtio":"2.3.2","vite":"7.3.7"}},"methodology":{"samples":5,"warmups":2,"seed":20261026,"scheduling":"Controlled commit benchmark: one synchronous logical transaction, one microtask checkpoint, then the same React flushSync checkpoint for every library; timing includes notification delivery and DOM commits, excludes correctness checks. No frame or paint wait.","coverage":{"complete":false,"cases":[{"workload":"filter-sort","size":50000,"operations":5,"consumers":1},{"workload":"array-reorder","size":50000,"operations":5,"consumers":100},{"workload":"memo-filter","size":50000,"operations":5,"consumers":1}]},"limitations":["Single machine, single browser process, sequential warmed runs; timings are not cross-device performance guarantees.","Headless browser commit latency excludes paint, layout measurement, network, real API libraries and user-event dispatch.","Large arrays use a bounded visible window; this is not a virtualization-library benchmark.","Zustand uses one structurally shared immutable publication per transaction; proxy libraries mutate in place. Representation costs are included.","Results are scenario-specific. Do not combine different workloads into an overall winner.","Fresh stores and roots for every sample; setup and teardown are measured separately. No forced garbage collection; allocation and GC can affect outliers."]},"results":[{"workload":"memo-filter","size":50000,"operations":5,"consumers":1,"library":"kinstate","samples":[{"setupMs":380.59999999962747,"mountMs":921.9000000003725,"updateMs":983.8000000007451,"unmountMs":20.199999999254942,"renders":5,"checksum":1543787693,"block":0},{"setupMs":289.2000000011176,"mountMs":438.59999999962747,"updateMs":1311.5999999996275,"unmountMs":18.40000000037253,"renders":5,"checksum":1543787693,"block":1},{"setupMs":279.69999999925494,"mountMs":1041.5999999996275,"updateMs":930.4000000003725,"unmountMs":12.400000000372529,"renders":5,"checksum":1543787693,"block":2},{"setupMs":299.7000000011176,"mountMs":467.7000000011176,"updateMs":1239.699999999255,"unmountMs":20.299999998882413,"renders":5,"checksum":1543787693,"block":3},{"setupMs":281.30000000074506,"mountMs":734.9000000003725,"updateMs":1019.2000000011176,"unmountMs":15.099999999627471,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"memo-filter","size":50000,"operations":5,"consumers":1,"library":"mobx","samples":[{"setupMs":416,"mountMs":53.90000000037253,"updateMs":246.69999999925494,"unmountMs":23.399999998509884,"renders":5,"checksum":1543787693,"block":0},{"setupMs":401.5,"mountMs":70,"updateMs":265.7000000011176,"unmountMs":22.200000001117587,"renders":5,"checksum":1543787693,"block":1},{"setupMs":364.59999999962747,"mountMs":53.70000000111759,"updateMs":237.59999999962747,"unmountMs":18.59999999962747,"renders":5,"checksum":1543787693,"block":2},{"setupMs":365.5,"mountMs":51.59999999962747,"updateMs":225.10000000149012,"unmountMs":21.09999999962747,"renders":5,"checksum":1543787693,"block":3},{"setupMs":369.7000000011176,"mountMs":52,"updateMs":254.90000000037253,"unmountMs":20.800000000745058,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"memo-filter","size":50000,"operations":5,"consumers":1,"library":"zustand","samples":[{"setupMs":7.300000000745058,"mountMs":5,"updateMs":27.200000001117587,"unmountMs":0.19999999925494194,"renders":5,"checksum":1543787693,"block":0},{"setupMs":6.399999998509884,"mountMs":5,"updateMs":24.399999998509884,"unmountMs":0.10000000149011612,"renders":5,"checksum":1543787693,"block":1},{"setupMs":6.099999999627471,"mountMs":5.100000001490116,"updateMs":25,"unmountMs":0.09999999962747097,"renders":5,"checksum":1543787693,"block":2},{"setupMs":7,"mountMs":4.5,"updateMs":23.09999999962747,"unmountMs":0,"renders":5,"checksum":1543787693,"block":3},{"setupMs":6.400000000372529,"mountMs":5.700000001117587,"updateMs":23.40000000037253,"unmountMs":0.2000000011175871,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"memo-filter","size":50000,"operations":5,"consumers":1,"library":"valtio","samples":[{"setupMs":353.80000000074506,"mountMs":446.7000000011176,"updateMs":1212.5999999996275,"unmountMs":11.599999999627471,"renders":5,"checksum":1543787693,"block":0},{"setupMs":359.59999999962747,"mountMs":456.59999999962747,"updateMs":1001.5,"unmountMs":15.399999998509884,"renders":5,"checksum":1543787693,"block":1},{"setupMs":362.2000000011176,"mountMs":448.59999999962747,"updateMs":990.3000000007451,"unmountMs":11.099999999627471,"renders":5,"checksum":1543787693,"block":2},{"setupMs":338.80000000074506,"mountMs":488.90000000037253,"updateMs":1139,"unmountMs":13.600000001490116,"renders":5,"checksum":1543787693,"block":3},{"setupMs":323,"mountMs":455.7000000011176,"updateMs":1054.2999999988824,"unmountMs":12,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"filter-sort","size":50000,"operations":5,"consumers":1,"library":"kinstate","samples":[{"setupMs":294.59999999962747,"mountMs":249.10000000149012,"updateMs":397.69999999925494,"unmountMs":7.699999999254942,"renders":5,"checksum":1543787693,"block":0},{"setupMs":265.5,"mountMs":262.59999999962747,"updateMs":474.59999999962747,"unmountMs":10.099999999627471,"renders":5,"checksum":1543787693,"block":1},{"setupMs":628.6999999992549,"mountMs":245.7000000011176,"updateMs":469.09999999962747,"unmountMs":5.699999999254942,"renders":5,"checksum":1543787693,"block":2},{"setupMs":270.90000000037253,"mountMs":486.2999999988824,"updateMs":499.1000000014901,"unmountMs":5.599999999627471,"renders":5,"checksum":1543787693,"block":3},{"setupMs":280.5,"mountMs":252.39999999850988,"updateMs":461.5,"unmountMs":10.400000000372529,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"filter-sort","size":50000,"operations":5,"consumers":1,"library":"mobx","samples":[{"setupMs":570.5,"mountMs":60.70000000111759,"updateMs":239.7999999988824,"unmountMs":21.5,"renders":5,"checksum":1543787693,"block":0},{"setupMs":326.09999999962747,"mountMs":57.399999998509884,"updateMs":247.2000000011176,"unmountMs":21.90000000037253,"renders":5,"checksum":1543787693,"block":1},{"setupMs":348.30000000074506,"mountMs":60.5,"updateMs":265.09999999962747,"unmountMs":21.300000000745058,"renders":5,"checksum":1543787693,"block":2},{"setupMs":351.1000000014901,"mountMs":61.40000000037253,"updateMs":255.09999999962747,"unmountMs":21.300000000745058,"renders":5,"checksum":1543787693,"block":3},{"setupMs":362.5,"mountMs":61.69999999925494,"updateMs":262.5,"unmountMs":23.5,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"filter-sort","size":50000,"operations":5,"consumers":1,"library":"zustand","samples":[{"setupMs":6.099999999627471,"mountMs":4.699999999254942,"updateMs":25.300000000745058,"unmountMs":0.2999999988824129,"renders":5,"checksum":1543787693,"block":0},{"setupMs":6.399999998509884,"mountMs":5.199999999254942,"updateMs":24.09999999962747,"unmountMs":0.09999999962747097,"renders":5,"checksum":1543787693,"block":1},{"setupMs":5.799999998882413,"mountMs":4.399999998509884,"updateMs":22.700000001117587,"unmountMs":0,"renders":5,"checksum":1543787693,"block":2},{"setupMs":5.699999999254942,"mountMs":4.799999998882413,"updateMs":25.300000000745058,"unmountMs":0.2000000011175871,"renders":5,"checksum":1543787693,"block":3},{"setupMs":7,"mountMs":4.900000000372529,"updateMs":25.199999999254942,"unmountMs":0.2000000011175871,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"filter-sort","size":50000,"operations":5,"consumers":1,"library":"valtio","samples":[{"setupMs":343.7000000011176,"mountMs":470.7000000011176,"updateMs":1068.7999999988824,"unmountMs":14.5,"renders":5,"checksum":1543787693,"block":0},{"setupMs":341.09999999962747,"mountMs":439.80000000074506,"updateMs":1088.8999999985099,"unmountMs":18.200000001117587,"renders":5,"checksum":1543787693,"block":1},{"setupMs":497.59999999962747,"mountMs":451.7000000011176,"updateMs":1032,"unmountMs":12.399999998509884,"renders":5,"checksum":1543787693,"block":2},{"setupMs":360.40000000037253,"mountMs":439.2000000011176,"updateMs":1192.699999999255,"unmountMs":10.400000000372529,"renders":5,"checksum":1543787693,"block":3},{"setupMs":345.90000000037253,"mountMs":455,"updateMs":1083.300000000745,"unmountMs":12.899999998509884,"renders":5,"checksum":1543787693,"block":4}]},{"workload":"array-reorder","size":50000,"operations":5,"consumers":100,"library":"kinstate","samples":[{"setupMs":276,"mountMs":1.099999999627471,"updateMs":30.699999999254942,"unmountMs":0.5,"renders":500,"checksum":1242578104,"block":0},{"setupMs":280,"mountMs":3.5,"updateMs":29.899999998509884,"unmountMs":0.40000000037252903,"renders":500,"checksum":1242578104,"block":1},{"setupMs":282.19999999925494,"mountMs":1,"updateMs":35.600000001490116,"unmountMs":0.6000000014901161,"renders":500,"checksum":1242578104,"block":2},{"setupMs":260.59999999962747,"mountMs":2.799999998882413,"updateMs":15.200000001117587,"unmountMs":0.5,"renders":500,"checksum":1242578104,"block":3},{"setupMs":270.80000000074506,"mountMs":2.699999999254942,"updateMs":30.59999999962747,"unmountMs":0.3999999985098839,"renders":500,"checksum":1242578104,"block":4}]},{"workload":"array-reorder","size":50000,"operations":5,"consumers":100,"library":"mobx","samples":[{"setupMs":978.7999999988824,"mountMs":1.199999999254942,"updateMs":18.800000000745058,"unmountMs":0.3999999985098839,"renders":500,"checksum":1242578104,"block":0},{"setupMs":343.5,"mountMs":0.599999999627471,"updateMs":23,"unmountMs":0.2999999988824129,"renders":500,"checksum":1242578104,"block":1},{"setupMs":351.40000000037253,"mountMs":0.8000000007450581,"updateMs":17.5,"unmountMs":0.3999999985098839,"renders":500,"checksum":1242578104,"block":2},{"setupMs":370.40000000037253,"mountMs":0.7000000011175871,"updateMs":18.09999999962747,"unmountMs":0.2999999988824129,"renders":500,"checksum":1242578104,"block":3},{"setupMs":348.7999999988824,"mountMs":0.5,"updateMs":15.900000000372529,"unmountMs":0.3999999985098839,"renders":500,"checksum":1242578104,"block":4}]},{"workload":"array-reorder","size":50000,"operations":5,"consumers":100,"library":"zustand","samples":[{"setupMs":5.700000001117587,"mountMs":0.5,"updateMs":1.599999999627471,"unmountMs":0.5,"renders":500,"checksum":1242578104,"block":0},{"setupMs":7,"mountMs":0.40000000037252903,"updateMs":1.900000000372529,"unmountMs":0.40000000037252903,"renders":500,"checksum":1242578104,"block":1},{"setupMs":6.099999999627471,"mountMs":0.30000000074505806,"updateMs":1.5,"unmountMs":0.2000000011175871,"renders":500,"checksum":1242578104,"block":2},{"setupMs":6.099999999627471,"mountMs":0.3999999985098839,"updateMs":1.1000000014901161,"unmountMs":0.40000000037252903,"renders":500,"checksum":1242578104,"block":3},{"setupMs":6,"mountMs":0.30000000074505806,"updateMs":1.199999999254942,"unmountMs":0.30000000074505806,"renders":500,"checksum":1242578104,"block":4}]},{"workload":"array-reorder","size":50000,"operations":5,"consumers":100,"library":"valtio","samples":[{"setupMs":381.30000000074506,"mountMs":289.90000000037253,"updateMs":1128.4000000003725,"unmountMs":12.099999999627471,"renders":500,"checksum":1242578104,"block":0},{"setupMs":351.40000000037253,"mountMs":285.30000000074506,"updateMs":1140.0999999996275,"unmountMs":15.300000000745058,"renders":500,"checksum":1242578104,"block":1},{"setupMs":338.5,"mountMs":274.80000000074506,"updateMs":1261.699999999255,"unmountMs":15.599999999627471,"renders":500,"checksum":1242578104,"block":2},{"setupMs":316.40000000037253,"mountMs":255,"updateMs":1159.7000000011176,"unmountMs":12.5,"renders":500,"checksum":1242578104,"block":3},{"setupMs":354.69999999925494,"mountMs":292.59999999962747,"updateMs":1159.5,"unmountMs":17.40000000037253,"renders":500,"checksum":1242578104,"block":4}]}]}
+        </script>
+        <script>
+          (function initializeReport(report, metadata, summarize) {
+  const { descriptions, labels: names, workloadLabels } = metadata;
+  const colors = {
+    kinstate: '#007e79',
+    'react-service': '#007e79',
+    mobx: '#bd520d',
+    zustand: '#396ec0',
+    valtio: '#7558a1',
+  };
+  const workload = document.getElementById('workload'),
+    size = document.getElementById('size'),
+    metric = document.getElementById('metric');
+  const format = (value) => Number(value).toLocaleString('en-US', { maximumFractionDigits: 6 });
+  function element(tag, text, cls) {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    if (cls) node.className = cls;
+    return node;
+  }
+  function option(select, value, label) {
+    const node = element('option', label);
+    node.value = value;
+    select.append(node);
+  }
+  option(workload, 'all', 'All workloads');
+  for (const name of new Set(report.results.map((row) => row.workload)))
+    option(workload, name, workloadLabels[name] || name);
+  option(size, 'all', 'All sizes');
+  for (const value of [...new Set(report.results.map((row) => row.size))].sort((a, b) => a - b))
+    option(size, String(value), format(value));
+  if ([...workload.options].some((option) => option.value === 'array-visible-row'))
+    workload.value = 'array-visible-row';
+  else if (workload.options.length > 1) workload.selectedIndex = 1;
+  if ([...size.options].some((option) => option.value === '10000')) size.value = '10000';
+  else if (size.options.length > 1) size.selectedIndex = 1;
+  function values(row) {
+    return row.samples.map((sample) =>
+      metric.value === 'startup'
+        ? sample.setupMs + sample.mountMs
+        : metric.value === 'setup'
+          ? sample.setupMs
+          : metric.value === 'mount'
+            ? sample.mountMs
+            : metric.value === 'unmount'
+              ? sample.unmountMs
+              : metric.value === 'renders'
+                ? sample.renders / row.operations
+                : sample.updateMs / row.operations,
+    );
+  }
+  function draw() {
+    const filtered = report.results.filter(
+      (row) =>
+        (workload.value === 'all' || row.workload === workload.value) &&
+        (size.value === 'all' || String(row.size) === size.value),
+    );
+    const groups = new Map();
+    for (const row of filtered) {
+      const key = JSON.stringify([row.workload, row.size, row.consumers, row.operations]);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    }
+    const host = document.getElementById('comparisons');
+    host.replaceChildren();
+    document.getElementById('status').textContent =
+      groups.size +
+      ' comparable case' +
+      (groups.size === 1 ? '' : 's') +
+      ' · ' +
+      metric.options[metric.selectedIndex].textContent +
+      ' · Lower is better';
+    if (!groups.size)
+      host.append(
+        element('p', 'No results match these filters. Choose another workload or size.', 'empty'),
+      );
+    for (const rows of groups.values()) {
+      rows.sort(
+        (a, b) => Object.keys(names).indexOf(a.library) - Object.keys(names).indexOf(b.library),
+      );
+      const item = rows[0],
+        section = element('section', undefined, 'comparison');
+      section.append(element('h2', workloadLabels[item.workload] || item.workload));
+      section.append(element('p', descriptions[item.workload] || item.workload));
+      section.append(
+        element(
+          'div',
+          format(item.size) +
+            ' records · ' +
+            format(item.consumers) +
+            ' consumers · ' +
+            format(item.operations) +
+            ' operations per sample',
+          'case-meta',
+        ),
+      );
+      const unit =
+        metric.value === 'renders' ? 'calls/op' : metric.value === 'update' ? 'ms/op' : 'ms';
+      section.append(element('div', '↓ Lower is better', 'direction'));
+      section.append(
+        element(
+          'p',
+          'Median ' +
+            metric.options[metric.selectedIndex].textContent +
+            '. Bars share a zero baseline within this case.',
+          'chart-note',
+        ),
+      );
+      const stats = rows.map((row) => summarize(values(row))),
+        maximum = Math.max(...stats.map((stat) => stat.median), Number.EPSILON),
+        bars = element('div', undefined, 'bars');
+      bars.setAttribute('aria-label', 'Median comparison; exact statistics follow in the table');
+      rows.forEach((row, index) => {
+        const bar = element('div', undefined, 'bar-row'),
+          track = element('div', undefined, 'track'),
+          fill = element('div', undefined, 'fill');
+        fill.style.width = (stats[index].median / maximum) * 100 + '%';
+        fill.style.backgroundColor = colors[row.library] || '#526679';
+        track.append(fill);
+        track.setAttribute('aria-hidden', 'true');
+        bar.append(
+          element('div', names[row.library] || row.library, 'bar-label'),
+          track,
+          element('div', format(stats[index].median) + ' ' + unit, 'bar-number'),
+        );
+        bars.append(bar);
+      });
+      section.append(bars);
+      const wrap = element('div', undefined, 'table-wrap'),
+        table = element('table');
+      table.append(
+        element(
+          'caption',
+          metric.options[metric.selectedIndex].textContent +
+            '; exact update render counts are totals per sample.',
+        ),
+      );
+      wrap.tabIndex = 0;
+      wrap.setAttribute('role', 'region');
+      wrap.setAttribute('aria-label', 'Statistics table; scroll horizontally on small screens');
+      const head = element('thead'),
+        heading = element('tr');
+      for (const title of [
+        'Library',
+        'Median (' + unit + ')',
+        (metric.value === 'update' ? 'P95 sample mean' : 'P95') + ' (' + unit + ')',
+        'Min–max (' + unit + ')',
+        'Exact render calls',
+      ]) {
+        const cell = element('th', title);
+        cell.scope = 'col';
+        heading.append(cell);
+      }
+      head.append(heading);
+      table.append(head);
+      const body = element('tbody');
+      rows.forEach((row, index) => {
+        const tr = element('tr'),
+          stat = stats[index],
+          renders = summarize(row.samples.map((sample) => sample.renders)),
+          name = element('th', names[row.library] || row.library);
+        name.scope = 'row';
+        tr.append(name);
+        for (const value of [
+          format(stat.median),
+          format(stat.p95),
+          format(stat.min) + '–' + format(stat.max),
+          format(renders.min) + '–' + format(renders.max),
+        ])
+          tr.append(element('td', value));
+        body.append(tr);
+      });
+      table.append(body);
+      wrap.append(table);
+      section.append(
+        wrap,
+        element(
+          'p',
+          'Compare within this case. Differences between cases reflect different work, not an overall ranking.',
+          'chart-note',
+        ),
+      );
+      host.append(section);
+    }
+  }
+  for (const select of [workload, size, metric]) select.addEventListener('change', draw);
+  draw();
+  document.getElementById('download').addEventListener('click', () => {
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }),
+    );
+    const link = element('a');
+    link.href = url;
+    link.download = 'results.json';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+})(
+            JSON.parse(document.getElementById('benchmark-data').textContent),
+            {"descriptions":{"persist-json":"Edit one row, then serialize the same canonical {count, rows} projection and synchronously write it to localStorage. Every adapter uses the same harness-owned JSON/storage path; quota preflight is excluded and final persisted contents are verified.","reactive-prop-row":"Pass a live row into a compiled receiving child (Kinstate), an observer child (MobX), an immutable row prop (Zustand), or a scoped snapshot child (Valtio). Count both parent and child render calls; edit one visible row.","memo-filter":"Memoized filter/sort presentation with one consumer. Kinstate uses authored React useMemo reading live rows; MobX uses its tracked computed getter before React memoization, and immutable adapters cache by row-array identity. Same sorting/projection and output, idiomatic dependency ownership.","memo-local-render":"Force 100 consumer renders through a changing React prop while service inputs remain unchanged. Compare component-local memo cache hits and cached dependency replay; all use React useMemo.","immutable-input-filter":"Filter/sort newly published immutable API payloads. The source only replaces its collection. Kinstate serviceInputs copies plain data into service-owned reactive state; MobX observable.ref, Valtio ref and Zustand retain replacement-only storage. Includes payload allocation, adoption and filtering/sorting. Ownership costs differ; historical borrowed-input Kinstate timings are incompatible.","api-payload":"Create a fresh plain incoming payload without reading existing reactive rows, then assign it. Includes identical payload allocation and library-specific adoption costs.","api-frozen":"Create a deeply frozen incoming row payload and assign it. Includes identical source allocation/freezing and each library's ownership and adoption costs.","array-remove":"Remove the last row and observe collection length.","array-reorder":"Reverse the array while 100 consumers observe their current row index.","bulk-rows-100":"Edit 100 distinct row values in one logical transaction. Each library publishes one batch; Zustand copies the array once.","record-churn":"Insert and delete a transient record key within one transaction; visible state remains unchanged. Heap retention is tested separately.","no-op":"Assign the current value back to itself. Measures the equality-check and scheduling floor without a state change.","full-list-row":"Mount one DOM consumer for every record, then edit one row. Collection size equals mounted consumer count; no virtualization.","unrelated":"Change an unobserved field while every mounted consumer observes another field.","single-field":"Update a primitive field observed by one mounted consumer.","shared-fanout":"Update one shared field observed by all consumers.","conditional":"Alternate branch switches, writes to the inactive branch, and writes to the active branch, exercising dependency replacement.","nested-field":"Update one field inside a nested object.","batch-100":"Perform 100 synchronous field mutations in each scheduled operation.","array-visible-row":"Edit a row rendered by the mounted list consumers.","array-offscreen-row":"Edit a row outside the mounted consumer window; no virtualization library is involved.","normalized-row":"Edit one record addressed by its key in normalized state.","append":"Append a record to the collection.","map-and-replace":"Map the existing reactive array into fresh row objects, change the first value, and replace the array. Includes reading observable rows and allocating/reobserving the replacement; this is not a plain incoming API payload assignment.","filter-sort":"Promote one source row, filter and sort the collection into its top 100 entries, and render the first result in one consumer.","parent-rerender":"Rerender the parent, including the service provider, while memoized consumers retain unchanged props and state. Measures memo bailout overhead."},"labels":{"kinstate":"Kinstate","react-service":"Kinstate","mobx":"MobX","zustand":"Zustand","valtio":"Valtio"},"workloadLabels":{"persist-json":"Edit and persist JSON","reactive-prop-row":"Edit a row passed to a child","memo-filter":"Memoize filter/sort presentation","memo-local-render":"Rerender memoized presentation","immutable-input-filter":"Filter replaced API payloads","api-payload":"Assign incoming API data","api-frozen":"Assign frozen API data","array-remove":"Remove an array row","array-reorder":"Reorder the array","bulk-rows-100":"Batch 100 row edits","record-churn":"Insert and delete record keys","no-op":"Same-value assignment","full-list-row":"Edit a row in a full list","unrelated":"Change unobserved state","single-field":"Update one field","shared-fanout":"One field, 100 readers","conditional":"Switch conditional dependencies","nested-field":"Edit a nested object","batch-100":"Batch 100 changes","array-visible-row":"Edit a visible array row","array-offscreen-row":"Edit an offscreen row","normalized-row":"Edit a record by ID","append":"Append to an array","map-and-replace":"Map and replace the array","filter-sort":"Filter and sort data","parent-rerender":"Update local parent state"}},
+            function summarize(values) {
+  if (
+    !Array.isArray(values) ||
+    values.length === 0 ||
+    Array.from(values).some((value) => !Number.isFinite(value))
+  ) {
+    throw new TypeError('Expected a nonempty array of finite numbers');
+  }
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return {
+    median: sorted.length % 2 ? sorted[middle] : sorted[middle - 1] / 2 + sorted[middle] / 2,
+    p95: sorted[Math.ceil(sorted.length * 0.95) - 1],
+    min: sorted[0],
+    max: sorted.at(-1),
+  };
+},
+          );
+        </script>
+      </body>
+    </html>

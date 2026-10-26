@@ -238,8 +238,10 @@ function wrapObject<T extends object>(value: T): T {
   const isArray = Array.isArray(value);
   if (!isService && isArray && hasCustomArrayClassPrototype(prototype)) return value;
   if (!isService && !isArray && prototype !== Object.prototype && prototype !== null) return value;
-  if (!Object.isExtensible(value) && (!isOwnedStateTarget(value) || Object.isFrozen(value)))
-    return value;
+  // Mutable owned copies receive their canonical proxy before their descriptors
+  // and extensibility are restored. An uncached non-extensible value is opaque;
+  // probing Object.isFrozen here would rescan large snapshots on every read.
+  if (!Object.isExtensible(value)) return value;
   const handler = new ReactiveHandler(value, isService, isArray);
   const proxy = new Proxy<T>(value, handler);
   handler.proxy = proxy;
@@ -258,6 +260,20 @@ export function createReactiveService<T extends object>(target: T): T {
 export function isReactive(value: unknown): boolean {
   const source = unwrapReadonlyView(value);
   return source !== null && typeof source === 'object' && handlers.get(source)?.proxy === source;
+}
+
+/** Private read-only membrane fast path; the canonical receiver never changes. */
+export function createReactiveReader(source: object): ((key: PropertyKey) => unknown) | undefined {
+  const handler = handlers.get(source);
+  // Borrowed targets can still be reconfigured through retained raw aliases.
+  // Keep their VM Proxy invariant checks rather than bypassing that boundary.
+  if (
+    !handler ||
+    handler.proxy !== source ||
+    (!serviceTargets.has(handler.target) && !isOwnedStateTarget(handler.target))
+  )
+    return;
+  return (key) => handler.get(handler.target, key, source);
 }
 
 /** Apply prevalidated fields, preserving callbacks without changing ordinary method binding. */

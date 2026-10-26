@@ -86,13 +86,19 @@ export class RenderFrame {
 
   readonly getSnapshot = (): Snapshot => {
     let changed = false;
-    for (const [dependency, renderedVersion] of this.dependencies) {
-      const version = dependency.getVersion();
-      const previous = this.checked.get(dependency) ?? renderedVersion;
-      if (version !== previous) changed = true;
-      this.checked.set(dependency, version);
+    try {
+      for (const [dependency, renderedVersion] of this.dependencies) {
+        const version = dependency.getVersion();
+        const previous = this.checked.get(dependency) ?? renderedVersion;
+        if (version !== previous) {
+          changed = true;
+          this.checked.set(dependency, version);
+        }
+      }
+    } finally {
+      // Do not lose an earlier change if a later dependency fails validation.
+      if (changed) this.snapshot = Object.freeze({ revision: this.snapshot.revision + 1 });
     }
-    if (changed) this.snapshot = Object.freeze({ revision: this.snapshot.revision + 1 });
     return this.snapshot;
   };
 

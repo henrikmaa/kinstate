@@ -24,6 +24,7 @@ const quick = args.includes('--quick');
 const samples = numberOption('samples', quick ? 2 : 7);
 const warmups = numberOption('warmups', quick ? 1 : 2);
 const operations = numberOption('operations', quick ? 5 : 30);
+const sampleTimeoutMs = numberOption('timeout-ms', 120000);
 const seed = numberOption('seed', 20261020);
 let randomState = seed >>> 0;
 function shuffled<T>(items: readonly T[]): T[] {
@@ -78,16 +79,36 @@ try {
   if (!production) throw new Error('Benchmark must use a production build');
   const results: Result[] = [];
   for (const benchmarkCase of shuffled(selectedCases)) {
+    console.log(`Measuring ${benchmarkCase.workload} / ${benchmarkCase.size} rows`);
     const byLibrary = Object.fromEntries(
       libraries.map((library) => [library, { ...benchmarkCase, library, samples: [] as Sample[] }]),
     ) as Record<(typeof libraries)[number], Result>;
     for (let trial = -warmups; trial < samples; trial++) {
       for (const library of shuffled(libraries)) {
-        const sample = await page.evaluate(
-          async ({ library, benchmarkCase }) =>
-            (window as any).runBenchmark(library, benchmarkCase),
-          { library, benchmarkCase },
-        );
+        let deadline: ReturnType<typeof setTimeout> | undefined;
+        let sample: Sample;
+        try {
+          sample = await Promise.race([
+            page.evaluate(
+              async ({ library, benchmarkCase }) =>
+                (window as any).runBenchmark(library, benchmarkCase),
+              { library, benchmarkCase },
+            ),
+            new Promise<never>((_, reject) => {
+              deadline = setTimeout(
+                () =>
+                  reject(
+                    new Error(
+                      `${library}/${benchmarkCase.workload}/${benchmarkCase.size}: sample ${trial} exceeded ${sampleTimeoutMs}ms`,
+                    ),
+                  ),
+                sampleTimeoutMs,
+              );
+            }),
+          ]);
+        } finally {
+          clearTimeout(deadline);
+        }
         if (browserErrors.length) throw new Error(browserErrors.join('\n'));
         for (const key of [
           'setupMs',

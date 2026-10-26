@@ -6,6 +6,7 @@
 - Publish provider input fields only when their source values change by `Object.is`. Unchanged source references preserve local edits and normalization across parent renders; replacement references publish new copies. This replaces the earlier borrowed-input and reassert-on-every-commit behavior.
 - Reuse owned-array reverse shape proofs while invalidating them on canonical structural or descriptor changes. Borrowed derived arrays retain per-call validation.
 - Reduce compiled memo tracking allocations and reuse unchanged memo subscriptions while preserving abandoned-render and subscription-race validation.
+- Keep leaf subscriptions in the committed memo cache, validate each result through its own aggregate dependency, and coalesce source notifications. Avoid repeated frozen-payload scans and bypass one proxy dispatch only for proven canonical owned reads.
 - Add implicit memo boundaries for compiled receiving components, cancellable observation scheduling, and benchmark provenance and noninferiority checks with explicit inconclusive results.
 
 ## 0.1.0

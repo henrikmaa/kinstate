@@ -1,0 +1,433 @@
+{
+  "status": "inconclusive",
+  "historical": false,
+  "settings": {
+    "tolerance": 0.05,
+    "confidence": 0.95,
+    "minSamples": 21,
+    "minSampleMs": 5,
+    "metrics": [
+      "update",
+      "setup",
+      "mount",
+      "startup",
+      "unmount"
+    ],
+    "simultaneousComparisons": 15,
+    "correction": "Exact median order-statistic intervals; Bonferroni across the comparison matrix"
+  },
+  "rows": [
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "update",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 93.8199999999255,
+        "p95": 99.82000000029802,
+        "min": 79.53999999985099,
+        "max": 99.82000000029802
+      },
+      "mobx": {
+        "median": 51.019999999925496,
+        "p95": 53.019999999925496,
+        "min": 47.959999999776485,
+        "max": 53.019999999925496
+      },
+      "ratio": 1.7695209354971206
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "setup",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 280.5,
+        "p95": 628.6999999992549,
+        "min": 265.5,
+        "max": 628.6999999992549
+      },
+      "mobx": {
+        "median": 351.1000000014901,
+        "p95": 570.5,
+        "min": 326.09999999962747,
+        "max": 570.5
+      },
+      "ratio": 0.7737931034482759
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "mount",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 252.39999999850988,
+        "p95": 486.2999999988824,
+        "min": 245.7000000011176,
+        "max": 486.2999999988824
+      },
+      "mobx": {
+        "median": 60.70000000111759,
+        "p95": 61.69999999925494,
+        "min": 57.399999998509884,
+        "max": 61.69999999925494
+      },
+      "ratio": 4.1037891268023685
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "startup",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 543.7000000011176,
+        "p95": 874.4000000003725,
+        "min": 528.0999999996275,
+        "max": 874.4000000003725
+      },
+      "mobx": {
+        "median": 412.50000000186265,
+        "p95": 631.2000000011176,
+        "min": 383.49999999813735,
+        "max": 631.2000000011176
+      },
+      "ratio": 1.3770534550252735
+    },
+    {
+      "workload": "filter-sort",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "unmount",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 7.699999999254942,
+        "p95": 10.400000000372529,
+        "min": 5.599999999627471,
+        "max": 10.400000000372529
+      },
+      "mobx": {
+        "median": 21.5,
+        "p95": 23.5,
+        "min": 21.300000000745058,
+        "max": 23.5
+      },
+      "ratio": 0.3581395348490671
+    },
+    {
+      "workload": "array-reorder",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 100,
+      "metric": "update",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 6.119999999925494,
+        "p95": 7.120000000298023,
+        "min": 3.0400000002235172,
+        "max": 7.120000000298023
+      },
+      "mobx": {
+        "median": 3.6199999999254944,
+        "p95": 4.6,
+        "min": 3.180000000074506,
+        "max": 4.6
+      },
+      "ratio": 1.6329787232999082
+    },
+    {
+      "workload": "array-reorder",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 100,
+      "metric": "setup",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 276,
+        "p95": 282.19999999925494,
+        "min": 260.59999999962747,
+        "max": 282.19999999925494
+      },
+      "mobx": {
+        "median": 351.40000000037253,
+        "p95": 978.7999999988824,
+        "min": 343.5,
+        "max": 978.7999999988824
+      },
+      "ratio": 0.7763761467936144
+    },
+    {
+      "workload": "array-reorder",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 100,
+      "metric": "mount",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks",
+        "Below 5 ms sample-duration floor; timing precision is insufficient"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 2.699999999254942,
+        "p95": 3.5,
+        "min": 1,
+        "max": 3.5
+      },
+      "mobx": {
+        "median": 0.7000000011175871,
+        "p95": 1.199999999254942,
+        "min": 0.5,
+        "max": 1.199999999254942
+      },
+      "ratio": 3.999999992017235
+    },
+    {
+      "workload": "array-reorder",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 100,
+      "metric": "startup",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 277.09999999962747,
+        "p95": 283.5,
+        "min": 263.3999999985099,
+        "max": 283.5
+      },
+      "mobx": {
+        "median": 352.2000000011176,
+        "p95": 979.9999999981374,
+        "min": 344.09999999962747,
+        "max": 979.9999999981374
+      },
+      "ratio": 0.782994560552176
+    },
+    {
+      "workload": "array-reorder",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 100,
+      "metric": "unmount",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks",
+        "Below 5 ms sample-duration floor; timing precision is insufficient"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 0.5,
+        "p95": 0.6000000014901161,
+        "min": 0.3999999985098839,
+        "max": 0.6000000014901161
+      },
+      "mobx": {
+        "median": 0.3999999985098839,
+        "p95": 0.3999999985098839,
+        "min": 0.2999999988824129,
+        "max": 0.3999999985098839
+      },
+      "ratio": 1.3333333395421505
+    },
+    {
+      "workload": "memo-filter",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "update",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 203.8400000002235,
+        "p95": 262.31999999992547,
+        "min": 186.0800000000745,
+        "max": 262.31999999992547
+      },
+      "mobx": {
+        "median": 49.33999999985099,
+        "p95": 53.140000000223516,
+        "min": 45.020000000298026,
+        "max": 53.140000000223516
+      },
+      "ratio": 3.998430757158211
+    },
+    {
+      "workload": "memo-filter",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "setup",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 289.2000000011176,
+        "p95": 380.59999999962747,
+        "min": 279.69999999925494,
+        "max": 380.59999999962747
+      },
+      "mobx": {
+        "median": 369.7000000011176,
+        "p95": 416,
+        "min": 364.59999999962747,
+        "max": 416
+      },
+      "ratio": 0.7671420735039515
+    },
+    {
+      "workload": "memo-filter",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "mount",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 734.9000000003725,
+        "p95": 1041.5999999996275,
+        "min": 438.59999999962747,
+        "max": 1041.5999999996275
+      },
+      "mobx": {
+        "median": 53.70000000111759,
+        "p95": 70,
+        "min": 51.59999999962747,
+        "max": 70
+      },
+      "ratio": 14.132692307699472
+    },
+    {
+      "workload": "memo-filter",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "startup",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 1016.2000000011176,
+        "p95": 1321.2999999988824,
+        "min": 727.8000000007451,
+        "max": 1321.2999999988824
+      },
+      "mobx": {
+        "median": 421.7000000011176,
+        "p95": 471.5,
+        "min": 417.09999999962747,
+        "max": 471.5
+      },
+      "ratio": 2.4097699786540776
+    },
+    {
+      "workload": "memo-filter",
+      "size": 50000,
+      "operations": 5,
+      "consumers": 1,
+      "metric": "unmount",
+      "status": "inconclusive",
+      "reasons": [
+        "Full current case coverage is not declared",
+        "Requires at least 21 independent trial blocks"
+      ],
+      "tolerance": 0.05,
+      "direction": "Lower is better",
+      "candidate": {
+        "median": 18.40000000037253,
+        "p95": 20.299999998882413,
+        "min": 12.400000000372529,
+        "max": 20.299999998882413
+      },
+      "mobx": {
+        "median": 21.09999999962747,
+        "p95": 23.399999998509884,
+        "min": 18.59999999962747,
+        "max": 23.399999998509884
+      },
+      "ratio": 0.8288288288038848
+    }
+  ],
+  "counts": {
+    "pass": 0,
+    "regression": 0,
+    "inconclusive": 15
+  }
+}

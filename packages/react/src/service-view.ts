@@ -1,6 +1,7 @@
 import { Service, isReactive } from '@kinstate/core';
 import {
   createReadonlyArrayIteration,
+  createReactiveReader,
   isServiceMethod,
   normalizeServiceArgument,
   registerReadonlyView,
@@ -83,11 +84,16 @@ export function readonlyServiceValue<T>(value: T): ReadonlyServiceValue<T> {
     : array
       ? []
       : Object.create(prototype);
+  const reactiveRead = createReactiveReader(source);
   let specializedMethods: WeakMap<Function, unknown> | undefined;
   let view: object;
   const read = (key: PropertyKey): unknown => {
     const result =
-      ordinary || callable ? Reflect.get(source, key, source) : readNativeValue(source, key);
+      ordinary || callable
+        ? reactiveRead
+          ? reactiveRead(key)
+          : Reflect.get(source, key, source)
+        : readNativeValue(source, key);
     // Constructors are inert class tokens, and native array species need a constructable function.
     if (key === 'constructor' && typeof result === 'function') return result;
     if (typeof result === 'function') {

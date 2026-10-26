@@ -1,6 +1,7 @@
 'use no service tracking';
 
 import type { Dependency } from '@kinstate/core';
+import { enqueue, cancelQueued } from '@kinstate/core/internal';
 
 type Snapshot = Readonly<{ revision: number }>;
 
@@ -15,12 +16,17 @@ export class MemoCache {
 
   readonly getSnapshot = (): Snapshot => {
     let changed = false;
-    for (const [dependency, renderedVersion] of this.dependencies) {
-      const version = dependency.getVersion();
-      if (version !== (this.checked.get(dependency) ?? renderedVersion)) changed = true;
-      this.checked.set(dependency, version);
+    try {
+      for (const [dependency, renderedVersion] of this.dependencies) {
+        const version = dependency.getVersion();
+        if (version !== (this.checked.get(dependency) ?? renderedVersion)) {
+          changed = true;
+          this.checked.set(dependency, version);
+        }
+      }
+    } finally {
+      if (changed) this.snapshot = Object.freeze({ revision: this.snapshot.revision + 1 });
     }
-    if (changed) this.snapshot = Object.freeze({ revision: this.snapshot.revision + 1 });
     return this.snapshot;
   };
 
@@ -33,6 +39,7 @@ export class MemoCache {
         this.connect();
       } catch (error) {
         this.listeners.delete(listener);
+        if (!this.listeners.size) cancelQueued(this.notify);
         throw error;
       }
     }
@@ -61,6 +68,10 @@ export class MemoCache {
     if (this.getSnapshot() !== before) this.notify();
   }
 
+  // Distinct changed leaves share one delivery at the core flush checkpoint.
+  // Publication-time race checks below still notify synchronously.
+  private readonly invalidate = (): void => enqueue(this.notify);
+
   private readonly notify = (): void => {
     for (const listener of [...this.listeners]) listener();
   };
@@ -72,7 +83,8 @@ export class MemoCache {
     const added = new Map<Dependency, () => void>();
     try {
       for (const dependency of this.dependencies.keys())
-        if (!this.stops.has(dependency)) added.set(dependency, dependency.subscribe(this.notify));
+        if (!this.stops.has(dependency))
+          added.set(dependency, dependency.subscribe(this.invalidate));
     } catch (error) {
       for (const stop of added.values()) stop();
       throw error;
@@ -87,6 +99,7 @@ export class MemoCache {
   }
 
   private disconnect(): void {
+    cancelQueued(this.notify);
     for (const stop of this.stops.values()) stop();
     this.stops.clear();
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Service, collectDependencies, type Dependency } from '@kinstate/core';
+import { Service, collectDependencies, flushSync, type Dependency } from '@kinstate/core';
 import { RenderFrame } from '../src/render-frame.js';
 import { MemoCache } from '../src/memo-cache.js';
 
@@ -159,6 +159,7 @@ describe('memo subscription reuse', () => {
     ).toThrow('subscription failed');
     expect([a.connects, a.disconnects, b.connects, b.disconnects]).toEqual([1, 0, 1, 1]);
     a.change();
+    flushSync();
     expect(updates).toBe(1);
     stop();
     expect(a.disconnects).toBe(1);
