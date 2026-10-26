@@ -1,6 +1,29 @@
 # Validation record
 
-Latest targeted verification: 2026-10-21 with Node.js 24.16.0 and 22.23.3, npm 11.13.0, Linux x64. The earlier load and benchmark records below were captured on 2026-10-20.
+## 2026-10-26: owned state and memo subscriptions
+
+Verified on Node.js 24.16.0, Linux x64. Consumer syntax remains `useService(ServiceClass)`; no new wrappers, selectors, or array APIs were introduced.
+
+| Check | Result |
+|---|---|
+| React 19.3.1 | 611 unit/compiler/integration tests passed |
+| React 18.3.1 | 610 passed; one Activity-only test skipped |
+| TypeScript, Hooks, boundaries, formatting | Passed; the 22 benchmark harness tests also passed |
+| Clean packed consumers | React 18/19 declarations, runtime, SSR, imported receivers, and Next.js Webpack + SWC passed |
+| Clean Git consumers | Core without React, React 18/19, lockfile reinstall, SSR, adapters, and Next.js Webpack + SWC passed |
+| Production examples | Vite and Next.js Turbopack builds passed; four browser tests passed, including hydration, request isolation, inputs, callbacks, and selective rendering |
+| Full production-browser comparison | 57 cases × 4 libraries = 228 validated comparisons, five measured blocks, two warmups, five updates per sample |
+| Performance certification | **Not established.** Diagnostic block counts and short samples do not satisfy the statistical release gate; large computed and memoized array operations remain slower than MobX |
+
+The owned-state tests cover publication-local aliases/cycles, source isolation, independent hydration scopes, callbacks, canonical DI sharing, reflection, pinned descriptors, opaque custom classes and deep iterative copies. A full benchmark exposed repeated frozen-array scans; a regression now verifies reads do not repeat that scan while sealed mutable copies remain reactive.
+
+Memo results retain their own captured versions through a single aggregate dependency, while committed caches own leaf subscriptions. Tests cover subscription reuse, mixed batches, errors, races, Strict Mode, abandoned transitions and unmount cleanup. The private readonly reader shortcut is restricted to canonical owned/service state; borrowed and foreign proxies retain their invariant checks.
+
+See the [complete diagnostic charts and raw samples](../benchmarks/diagnostics/current/report.html) and [methodology](../benchmarks/diagnostics/README.md). Historical records below describe their original code and dates.
+
+## Earlier verification
+
+Earlier targeted verification: 2026-10-21 with Node.js 24.16.0 and 22.23.3, npm 11.13.0, Linux x64. The earlier load and benchmark records below were captured on 2026-10-20.
 
 The framework is now named **Kinstate — Ordinary classes. Reactive state.** Public packages, compiler defaults, workspace imports, examples and clean consumer checks use `@kinstate`. The frozen pre-maintenance compiler corpus retains its original import alias and filenames to preserve source-map evidence. Recorded benchmark JSON retains its original identifiers, samples and timestamps; regenerated reports display Kinstate, and new runs use the `kinstate` identifier. Branding does not represent a new timing measurement.
 
